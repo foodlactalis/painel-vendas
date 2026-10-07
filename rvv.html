@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RVV · Corrigido Final v3 + Regras</title>
+  <style>
+    :root{--bg:#f8f9fa;--ink:#1a1a2e;--muted:#6b7280;--line:#e5e7eb;--shadow:0 10px 18px rgba(26,26,46,.08);--shadow2:0 18px 30px rgba(79,172,254,.12);--accent:#4facfe;--accent-dark:#0080ff;--ok:#10b981;--mid:#f59e0b;--warn:#ef4444;--header:#0f172a;--header-light:#1e293b}
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;background:radial-gradient(900px 260px at 20% -20%,rgba(79,172,254,.05),transparent 65%),radial-gradient(700px 220px at 80% -10%,rgba(59,130,246,.04),transparent 65%),var(--bg);color:var(--ink);font:14px/1.45 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+    header.topbar{background:linear-gradient(135deg,var(--header) 0%,var(--header-light) 100%);color:#fff;border-bottom:1px solid rgba(255,255,255,.1);position:sticky;top:0;z-index:20;box-shadow:var(--shadow);isolation:isolate}
+    .header-container{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;max-width:1400px;margin:0 auto;width:100%;position:relative}
+    header.topbar h1{margin:0;font-size:16px;letter-spacing:.5px;text-transform:uppercase;font-weight:700;background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    nav.navbar{display:flex;gap:20px;align-items:center;flex-wrap:wrap;position:relative;z-index:9999}
+    nav.navbar a.nav-btn{color:#4facfe;background:transparent;border:none;font:inherit;cursor:pointer;font-size:12px;font-weight:500;padding:6px 12px;border-radius:8px;transition:all .25s ease;text-decoration:none;display:inline-block}
+    nav.navbar a.nav-btn:hover{color:#00f2fe;background:rgba(79,172,254,.10)}
+    nav.navbar a.nav-btn.active{color:#00f2fe;background:rgba(79,172,254,.15);border-bottom:2px solid #00f2fe}
+    .nav-toggle{display:none;background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:4px 8px}
+    .wrap{padding:16px 20px;max-width:1400px;margin:0 auto}
+    .filters-box,.cat-box{border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow);padding:12px}
+    .filters-box{margin-bottom:14px}.filters-box.collapsed .filters{display:none}
+    .filters-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.filters-head .t{font-size:12px;font-weight:800;color:var(--ink)}.filters-head .link{font-size:11px;color:var(--accent-dark);cursor:pointer;font-weight:800;user-select:none}.filters-head .link:hover{color:var(--accent)}
+    .filters{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end}.filters-cols{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.filters-col{display:grid;gap:8px}
+    .filters label{font-size:11px;color:var(--muted);display:flex;flex-direction:column;font-weight:600;gap:4px}.filters select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:12px;outline:none;transition:border-color .2s}.filters select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,172,254,.10)}.multi-filter{position:relative;width:100%;}.multi-filter .multi-native-select{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;}.multi-trigger{width:100%;height:36px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 10px;font:inherit;font-size:12px;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;}.multi-trigger:hover,.multi-filter.open .multi-trigger{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,172,254,.10);}.multi-trigger-label{overflow:hidden;text-overflow:ellipsis;}.multi-trigger-arrow{font-size:10px;color:var(--muted);transition:transform .2s ease;}.multi-filter.open .multi-trigger-arrow{transform:rotate(180deg);}.multi-menu{display:none;position:absolute;z-index:50;top:calc(100% + 4px);left:0;right:0;max-height:230px;overflow:auto;padding:5px;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 12px 28px rgba(15,23,42,.18);scrollbar-width:thin;scrollbar-color:#9aa5b1 #f3f5f8;}.multi-filter.open .multi-menu{display:block;}.multi-option{display:flex;flex-direction:row-reverse;align-items:center;justify-content:flex-start;direction:ltr;gap:10px;min-height:34px;padding:6px 8px;border-bottom:1px solid #eef0f3;color:var(--ink);font-size:11px;line-height:1.25;text-align:left;cursor:pointer;border-radius:5px;transition:background .15s ease,color .15s ease;}.multi-option:last-child{border-bottom:0;}.multi-option:hover{background:#f1f7ff;color:#0f172a;}.multi-option span{display:block;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;}.multi-option input{flex:0 0 16px;width:16px;height:16px;margin:0;border:1px solid #aeb7c4;border-radius:4px;background:#fff;accent-color:var(--accent-dark);cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,.08);}.multi-option input:focus-visible{outline:2px solid rgba(79,172,254,.45);outline-offset:2px;}.multi-option.is-all{font-weight:700;background:#fafcff;border-bottom:1px solid #e3e8ef;}.filters label.multi-option{display:flex;flex-direction:row-reverse;align-items:center;justify-content:flex-start;text-align:left;}
+    .btns{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.btn{padding:8px 14px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;font-size:11px;font-weight:700;transition:all .2s}.btn:hover{border-color:var(--accent);background:rgba(79,172,254,.05)}
+    .cards{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}.card{grid-column:span 4;background:#fff;border-radius:12px;box-shadow:var(--shadow);padding:14px;border:1px solid var(--line);transition:all .3s ease;position:relative;overflow:hidden}.card:hover{border-color:rgba(79,172,254,.3);box-shadow:var(--shadow2)}
+    .card.big{grid-column:span 5;background:url('fundo_resumo.png') no-repeat center center;background-size:cover}.card.money{grid-column:span 3;background:url('fundo_rvv.png') no-repeat center center;background-size:cover}.card.big::after,.card.money::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.82);z-index:0}.card.big>*,.card.money>*{position:relative;z-index:1}
+    .card h3{margin:0 0 8px 0;font-size:13px;text-transform:uppercase;letter-spacing:.5px;font-weight:700}.summary-content{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}.summary-right{display:flex;gap:15px;align-items:center;justify-content:center;width:100%}.gauge{display:flex;align-items:center;gap:8px}.gauge svg{width:60px;height:60px}.ring-bg{stroke:var(--line);stroke-width:7;fill:none}.ring-fill{stroke-width:7;fill:none;stroke-linecap:round;transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dasharray .5s ease}.g-label{font-size:10px;color:var(--muted);font-weight:600}.g-val{font-weight:800;font-size:14px}
+    .money-wrap{display:flex;flex-direction:column;gap:8px}.money-line{display:flex;align-items:baseline;gap:8px}.money-line .lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;width:55px}.money-val{font-weight:900;font-size:22px;color:var(--ok)}
+    .missing-list{display:flex;flex-direction:column;gap:8px;margin-top:10px;max-height:200px;overflow:auto}.miss-row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;cursor:pointer}.miss-row:hover{background:rgba(79,172,254,.06);border-radius:10px;padding:4px 6px;margin:-4px -6px}.miss-row .left{font-weight:800;color:var(--accent-dark);font-size:12px;line-height:1.15}.miss-row .right{display:flex;flex-direction:column;align-items:flex-end;gap:2px}.miss-row .need{font-weight:900;font-size:12px;line-height:1.15}.miss-row .car{font-size:10.5px;color:var(--muted);font-weight:700;line-height:1.15}
+    .cat-box{margin-top:14px}.cat-head h3{margin:0 0 12px 0;font-size:14px;font-weight:700}.tbl-container{overflow-x:auto}.tbl,.subtbl{width:100%;border-collapse:collapse}.tbl{font-size:13px}.tbl th,.tbl td{padding:12px;text-align:left;border-bottom:1px solid var(--line)}.tbl th{background:var(--header);color:#fff;font-weight:600;font-size:11px;text-transform:uppercase}.tbl tbody tr:hover{background-color:rgba(79,172,254,.05)}.tbl .num,.subtbl .num{text-align:right;font-weight:700}
+    .rvv-hit{color:var(--ok);font-weight:800}.perf-bad{color:var(--warn)!important;font-weight:900}.perf-ok{color:var(--ok)!important;font-weight:900}.perf-mid{color:var(--mid)!important;font-weight:900}
+    .row-toggle{background:rgba(79,172,254,.08);border:1px solid rgba(79,172,254,.25);color:var(--accent-dark);font-weight:800;cursor:pointer;border-radius:10px;padding:2px 8px;line-height:1.2}.row-toggle:hover{background:rgba(79,172,254,.14)}.details-row td{padding:0!important;background:rgba(79,172,254,.02)}.detail-scroll{max-height:170px;overflow:auto;border:1px solid var(--line);border-radius:8px;background:#fff;margin:0}.subtbl{font-size:11px;min-width:760px}.subtbl th,.subtbl td{padding:7px 8px;border-bottom:1px solid var(--line)}.subtbl th{background:var(--header);color:#fff;text-transform:uppercase;font-size:10px;position:sticky;top:0;z-index:2}
+    .canal-warn{display:none;margin-top:10px;font-size:11px;color:var(--mid);font-weight:600}.small-note{color:var(--muted);font-size:11px;margin-top:6px}.diag{margin-top:8px;font-size:11px;color:var(--muted);font-weight:700}
+    @media (max-width:1024px){.card{grid-column:span 6}.card.big{grid-column:span 12}.card.money{grid-column:span 6}}
+    @media (max-width:768px){.nav-toggle{display:block}nav.navbar{display:none!important;position:absolute!important;top:100%!important;left:0!important;right:0!important;flex-direction:column!important;gap:0!important;align-items:stretch!important;background:var(--header-light)!important;border-bottom:1px solid rgba(255,255,255,.10)!important;padding:10px 0!important;max-height:calc(100vh - 56px);overflow:auto;-webkit-overflow-scrolling:touch;z-index:9999!important}nav.navbar.active{display:flex!important}nav.navbar a.nav-btn{width:100%!important;text-align:left!important;padding:16px 16px!important;border-radius:0!important;border-bottom:1px solid rgba(255,255,255,.06)!important;color:rgba(229,231,235,.92)!important;font-weight:700!important;letter-spacing:.8px;text-transform:uppercase}.wrap{padding:12px 14px}.filters{grid-template-columns:1fr}.filters-cols{grid-template-columns:1fr}.card,.card.money,.card.big{grid-column:span 12}.subtbl{min-width:620px}}
+  
+/* ===== Data da última atualização da base ===== */
+.brand-block{display:flex!important;flex-direction:column!important;gap:2px!important;min-width:0!important;}
+.last-updated{display:block!important;font-size:11px!important;font-weight:700!important;color:rgba(229,231,235,.92)!important;letter-spacing:.2px!important;line-height:1.2!important;white-space:nowrap!important;-webkit-text-fill-color:rgba(229,231,235,.92)!important;background:none!important;}
+.last-updated.loading{color:rgba(229,231,235,.70)!important;-webkit-text-fill-color:rgba(229,231,235,.70)!important;}
+.last-updated.error{color:#fbbf24!important;-webkit-text-fill-color:#fbbf24!important;}
+@media (max-width:768px){.brand-block{max-width:calc(100% - 52px)!important;}.last-updated{font-size:10px!important;white-space:normal!important;}}
+
+</style>
+</head>
+<body>
+<header class="topbar"><div class="header-container"><h1>💰 RVV</h1><button class="nav-toggle" id="navToggle">☰</button><nav class="navbar" id="navbar"><a class="nav-btn" href="index.html">PAINEL DE VENDAS</a><a class="nav-btn" href="carteira.html">CARTEIRA</a><a class="nav-btn active" href="rvv.html">RVV</a><a class="nav-btn" href="campanha.html">CAMPANHA DE VENDAS</a><a class="nav-btn" href="estoque.html">ESTOQUE</a><a class="nav-btn" href="oportunidades.html">OPORTUNIDADES</a><a class="nav-btn" href="investimentos.html">INVESTIMENTOS</a><a class="nav-btn" href="forecast.html">FORECAST</a></nav></div></header>
+<div class="wrap">
+  <div class="filters-box collapsed" id="filtersBox"><div class="filters-head"><div class="t">⚙️ Filtros</div><div class="link" id="btnToggleFilters">Mostrar</div></div><div class="filters"><div class="filters-cols"><div class="filters-col"><label>Gerente<select id="f_ger" multiple size="4"></select></label><label>Coordenação<select id="f_coord" multiple size="4"></select></label></div><div class="filters-col"><label>Vendedor<select id="f_vend" multiple size="4"></select></label><label>Categoria<select id="f_cat" multiple size="4"></select></label></div></div><div class="btns"><button id="btnReload" class="btn">Recarregar</button><button id="btnClear" class="btn">Limpar</button></div></div></div>
+  <section class="cards"><div class="card big"><div class="summary-content"><h3>📈 Resumo do Mês</h3><div class="summary-right"><div class="gauge"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="28" class="ring-bg"></circle><circle cx="50" cy="50" r="28" id="ringReal" class="ring-fill" stroke="#ef4444" stroke-dasharray="0 175.9"></circle></svg><div><div class="g-label">Ating. Real</div><div class="g-val" id="kpiAtingReal">0,00%</div></div></div><div class="gauge"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="28" class="ring-bg"></circle><circle cx="50" cy="50" r="28" id="ringRC" class="ring-fill" stroke="#f59e0b" stroke-dasharray="0 175.9"></circle></svg><div><div class="g-label">Ating. R+C</div><div class="g-val" id="kpiAtingRC">0,00%</div></div></div></div></div></div><div class="card money"><h3>💰 Ganho de RVV</h3><div class="money-wrap"><div class="money-line"><span class="lbl">Real:</span><span class="money-val" id="kpiRvvSumReal">0,00%</span></div><div class="money-line"><span class="lbl">R+C:</span><span class="money-val" id="kpiRvvSumRC">0,00%</span></div></div></div><div class="card"><h3>🏆 Faltam para bater a meta (Real)</h3><div id="missingList" class="missing-list"></div><div class="small-note">Cálculo: <b>Meta − Real</b> (kg) · Mostrando também a <b>Carteira</b>.</div><div id="diagBox" class="diag"></div></div></section>
+  <div class="cat-box"><div class="cat-head"><h3>📂 Grupos — Ating.(%) e %RVV</h3></div><div class="tbl-container"><table class="tbl" id="catTbl"><thead><tr><th>Grupo</th><th class="num">Meta</th><th class="num">Real</th><th class="num">Ating. Real (%)</th><th class="num">%RVV Real</th><th class="num">R+C</th><th class="num">Ating. R+C (%)</th><th class="num">%RVV R+C</th><th class="num">Detalhes</th></tr></thead><tbody></tbody></table></div><div id="canalWarn" class="canal-warn">⚠️ Há grupos com múltiplos canais. O %RVV foi calculado como média ponderada pela meta.</div><div class="small-note">R+C = Real + Carteira.</div></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+/** ===== PFV: Sync global de filtros (Ger/Coord/Vend/Cat) ===== */
+const PFV_FILTERS_KEY = "pfv_filters_v2";
+function pfvGetFilters(){try{return JSON.parse(localStorage.getItem(PFV_FILTERS_KEY)||"{}");}catch(e){return {};}}
+function pfvSetFilters(patch){const cur=pfvGetFilters();const next={...cur,...patch};try{localStorage.setItem(PFV_FILTERS_KEY,JSON.stringify(next));}catch(e){}return next;}
+function pfvTrySetValue(el, value, allowCreate=false){
+  if(!el || value == null || value === "") return false;
+  if(el.tagName === "SELECT"){
+    const values = Array.isArray(value) ? value.map(String) : String(value).split(',').map(v=>v.trim()).filter(Boolean);
+    const missing = values.filter(v=>!Array.from(el.options).some(o=>o.value===v));
+    if(missing.length){
+      if(!allowCreate) return false;
+      missing.forEach(v=>{ const opt=document.createElement('option'); opt.value=v; opt.textContent=v; el.appendChild(opt); });
+    }
+    Array.from(el.options).forEach(option=>{ option.selected=values.includes(option.value); });
+    return true;
+  }
+  el.value = value; return true;
+}
+function pfvBindFilterSync(map){
+  const entries = Object.entries(map).map(([key,cfg])=>{
+    const id = typeof cfg === 'string' ? cfg : cfg.id;
+    const allowCreate = typeof cfg === 'object' ? !!cfg.allowCreate : false;
+    const el = document.getElementById(id);
+    return el ? { key, el, allowCreate } : null;
+  }).filter(Boolean);
+  function applyFromStorage(){
+    const saved = pfvGetFilters();
+    entries.forEach(({key, el, allowCreate})=>{
+      if(saved[key] != null && saved[key] !== '') pfvTrySetValue(el, saved[key], allowCreate);
+    });
+    if(typeof syncMultiSelectUI==='function') document.querySelectorAll('select[multiple]').forEach(syncMultiSelectUI);
+  }
+  function saveToStorage(){
+    const patch = {};
+    entries.forEach(({key, el})=> patch[key] = el.multiple ? Array.from(el.selectedOptions).map(o=>o.value).filter(Boolean) : (el.value || ''));
+    pfvSetFilters(patch);
+  }
+  entries.forEach(({el})=>{
+    el.addEventListener('change', saveToStorage);
+    el.addEventListener('input', saveToStorage);
+  });
+  window.addEventListener('storage', (e)=>{ if(e.key === PFV_FILTERS_KEY) applyFromStorage(); });
+  return { applyFromStorage, saveToStorage };
+}
+</script>
+<script>
+  const STATE = { RULES:{}, BASE:[] };
+  const $ = s => document.querySelector(s), $$ = s => document.querySelectorAll(s);
+  const up = s => String(s||'').trim().toUpperCase();
+  function normName(s){ return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[\_\s]+/g,'').toUpperCase(); }
+  function normText(s){ return String(s||'').replace(/\s+/g,' ').trim(); }
+  function normGroupKey(s){ return normName(normText(s)); }
+  function groupLabelFromKey(k){ const key=normGroupKey(k); if(key==='GRUPO1') return 'GRUPO 1'; if(key==='GRUPO2') return 'GRUPO 2'; if(key==='GRUPO3') return 'GRUPO 3'; if(key==='GRUPOFOCO') return 'GRUPO FOCO'; return normText(k||''); }
+  function groupDisplayName(name){ const s = groupLabelFromKey(name); const m=s.match(/GRUPO\s*(\d+)/i); if(m) return `Grupo ${m[1]}`; if(normGroupKey(s)==='GRUPOFOCO') return 'Grupo Foco'; return s||'Sem Grupo'; }
+  function groupSortKey(name){ const k = normGroupKey(name); if(k==='GRUPO1') return 1; if(k==='GRUPO2') return 2; if(k==='GRUPO3') return 3; if(k==='GRUPOFOCO') return 4; return 999; }
+  function getField(row, ...cands){ const keys=Object.keys(row||{}); const map=new Map(keys.map(k=>[normName(k),k])); for(const c of cands){ const nk=normName(c); if(map.has(nk)) return row[map.get(nk)]; } return undefined; }
+  const num = v => { const n=Number(String(v??'').replace(',', '.')); return isNaN(n)?0:n; };
+  const sum = a => a.reduce((x,y)=>x+y,0);
+  const fmtInt = n => Math.round(Number(n||0)).toLocaleString('pt-BR');
+  const pctStr = (x,d=2) => (100*(x||0)).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})+'%';
+  const bandIndex = a => !(a>0.95) ? -1 : (a<1 ? 0 : (a<1.10 ? 1 : 2));
+  const getCarteira = row => num(getField(row,'CARTEIRA')); const getRC = row => num(getField(row,'R+C','RC','R C')); const getReal = row => num(getField(row,'VolReal','VOLREAL')); const getMeta = row => num(getField(row,'VolMeta','VOLMETA'));
+  function perfClass(v){ if(v>=1) return 'perf-ok'; if(v<0.999) return 'perf-bad'; return 'perf-mid'; }
+  async function loadRules(){ const resp=await fetch('Base Rvv - Dados.xlsx?v='+(new Date()).getTime()); if(!resp.ok) throw new Error(`HTTP ${resp.status} ao carregar Base Rvv - Dados.xlsx`); const wb=XLSX.read(await resp.arrayBuffer(),{type:'array'}); const sh=wb.Sheets['REGRAS ']||wb.Sheets['REGRAS']||wb.Sheets['Regras']; if(!sh) throw new Error('Aba REGRAS não encontrada'); const rows=XLSX.utils.sheet_to_json(sh,{defval:null}); if(!rows.length) throw new Error('Regras vazias'); const keys=Object.keys(rows[0]||{}); const exact=(name)=> keys.find(k=>String(k||'').trim()===name) || null; const pickLast=(...alts)=>{ for(let i=keys.length-1;i>=0;i--){ const K=normName(keys[i]); for(const a of alts){ if(K===normName(a)) return keys[i]; } } return null; }; const cGrp=exact('GRUPO')||pickLast('GRUPO'), cCan=exact('CANAL')||pickLast('CANAL'), cCar=exact('CARGO')||pickLast('CARGO'), cB1=exact('>95% <>99,9%')||pickLast('>95%<>99,9%','>95% <>99,9%','>95%< >99,9%','>95%'), cB2=exact('100% <> 109,9%')||pickLast('100%<>109,9%','100% <> 109,9%','100%<> 109,9%','100%'), cB3=exact('>110%')||pickLast('>110%','>=110%'); if(!cGrp||!cCan||!cCar||!cB1||!cB2||!cB3) throw new Error('Colunas de regras não encontradas corretamente'); const rules={}; rows.forEach(r=>{ const canal=up(r[cCan]), cargo=up(r[cCar]), grpKey=normGroupKey(r[cGrp]); if(!canal||!cargo||!grpKey) return; const b1=num(r[cB1]), b2=num(r[cB2]), b3=num(r[cB3]); (rules[canal] ||= {})[cargo] ||= {}; rules[canal][cargo][grpKey]=[b1,b2,b3]; }); STATE.RULES=rules; }
+  async function loadBase(){ const resp=await fetch('Base Rvv - Dados.xlsx?v='+(new Date()).getTime()); if(!resp.ok) throw new Error(`HTTP ${resp.status} ao carregar Base Rvv - Dados.xlsx`); const wb=XLSX.read(await resp.arrayBuffer(),{type:'array'}); const sh=wb.Sheets['BASE RVV']||wb.Sheets[wb.SheetNames[0]]; const rows=XLSX.utils.sheet_to_json(sh,{defval:null}); if(!rows.length) throw new Error('Base vazia'); STATE.BASE=rows; }
+  function fillSel(id, values){ const el=$(id); if(!el) return; const cur = el.multiple ? Array.from(el.selectedOptions).map(o=>o.value).filter(Boolean) : (el.value || ''); el.innerHTML='<option value="">(Todos)</option>'; [...new Set(values.filter(v=>v!=null && v!==''))].sort((a,b)=>(''+a).localeCompare((''+b),'pt-BR')).forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; el.appendChild(o); }); const keep=Array.isArray(cur)?cur:[cur].filter(Boolean); Array.from(el.options).forEach(o=>{ o.selected=keep.includes(o.value); }); }
+  function buildFilters(){ const B=STATE.BASE; fillSel('#f_ger',B.map(r=>normText(getField(r,'GERENTE')))); fillSel('#f_coord',B.map(r=>normText(getField(r,'COORDENAÇÃO','COORDENACAO')))); fillSel('#f_vend',B.map(r=>normText(getField(r,'VENDEDOR','Vendedor')))); fillSel('#f_cat',B.map(r=>normText(getField(r,'CATEGORIA','Categoria')))); initMultiSelects(); }
+  function selectedValues(id){ return Array.from(document.getElementById(id)?.selectedOptions || []).map(o=>o.value).filter(Boolean); }
+  function syncMultiSelectUI(select){ const root=select.closest('.multi-filter'); if(!root) return; const actual=[...select.options].filter(o=>o.value); const selected=actual.filter(o=>o.selected); const allSelected=actual.length>0&&selected.length===actual.length; const label=root.querySelector('.multi-trigger-label'); if(label) label.textContent=(!selected.length||allSelected)?'Todos':(selected.length===1?selected[0].textContent:`${selected.length} selecionados`); root.querySelectorAll('.multi-option input').forEach(check=>{ const option=select.options[check.dataset.optionIndex]; if(option) check.checked=option.value?(option.selected):(!selected.length||allSelected); }); }
+  function clearSiblingFilters(){ /* Os filtros são acumulativos; não limpar campos ao selecionar outro. */ }
+  function initMultiSelects(){ document.querySelectorAll('.filters select[multiple]').forEach(select=>{ let root=select.closest('.multi-filter'); if(!root){ root=document.createElement('div'); root.className='multi-filter'; select.parentNode.insertBefore(root,select); root.appendChild(select); select.classList.add('multi-native-select'); const trigger=document.createElement('button'); trigger.type='button'; trigger.className='multi-trigger'; trigger.innerHTML='<span class="multi-trigger-label">Todos</span><span class="multi-trigger-arrow">▾</span>'; root.appendChild(trigger); const menu=document.createElement('div'); menu.className='multi-menu'; root.appendChild(menu); trigger.addEventListener('click',event=>{ event.stopPropagation(); document.querySelectorAll('.multi-filter.open').forEach(other=>{if(other!==root) other.classList.remove('open');}); root.classList.toggle('open'); }); } const menu=root.querySelector('.multi-menu'); menu.innerHTML=''; [...select.options].forEach((option,index)=>{ const row=document.createElement('label'); row.className='multi-option'+(!option.value?' is-all':''); row.innerHTML=`<input type="checkbox" data-option-index="${index}"><span>${option.textContent}</span>`; const check=row.querySelector('input'); check.checked=option.selected; check.addEventListener('change',()=>{ if(!option.value){ [...select.options].forEach(o=>o.selected=check.checked&&!!o.value); if(check.checked) clearSiblingFilters(select.id); } else { option.selected=check.checked; if(check.checked) clearSiblingFilters(select.id); const allOption=[...select.options].find(o=>!o.value); if(allOption) allOption.selected=false; } syncMultiSelectUI(select); select.dispatchEvent(new Event('input',{bubbles:true})); select.dispatchEvent(new Event('change',{bubbles:true})); }); menu.appendChild(row); }); syncMultiSelectUI(select); }); }
+  document.addEventListener('click',event=>{ if(!event.target.closest('.multi-filter')) document.querySelectorAll('.multi-filter.open').forEach(root=>root.classList.remove('open')); });
+  function detectRole(){ if(selectedValues('f_vend').length) return 'VENDEDOR'; if(selectedValues('f_coord').length) return 'COORDENADOR'; if(selectedValues('f_ger').length) return 'GERENTE'; return 'VENDEDOR'; }
+  function currentRows(){ const g=selectedValues('f_ger'), c=selectedValues('f_coord'), v=selectedValues('f_vend'), cat=selectedValues('f_cat'); return STATE.BASE.filter(r=>{ const rg=normText(getField(r,'GERENTE')), rc=normText(getField(r,'COORDENAÇÃO','COORDENACAO')), rv=normText(getField(r,'VENDEDOR','Vendedor')), rcat=normText(getField(r,'CATEGORIA','Categoria')); if(g.length&&!g.includes(rg)) return false; if(c.length&&!c.includes(rc)) return false; if(v.length&&!v.includes(rv)) return false; if(cat.length&&!cat.includes(rcat)) return false; return true; }); }
+  function getRulePct(canal, grpKey, cargo, ating){ const arr=STATE.RULES?.[up(canal)]?.[up(cargo)]?.[normGroupKey(grpKey)]; const idx=bandIndex(ating); return (idx>=0 && arr) ? (arr[Math.min(idx, arr.length-1)]||0) : 0; }
+  function groupPctWeighted(grpKey, canalsMap, role, useRC){ let wSum=0,w=0; canalsMap.forEach((st,canal)=>{ const meta=st.meta; if(!(meta>0)) return; const ating=(useRC?st.rc:st.real)/meta; const pct=getRulePct(canal,grpKey,role,ating); wSum += pct*meta; w += meta; }); return w>0 ? (wSum/w) : 0; }
+  function categoryPctWeighted(grpKey, catCanalsMap, role, useRC){ let wSum=0,w=0; catCanalsMap.forEach((st,canal)=>{ const meta=st.meta; if(!(meta>0)) return; const ating=(useRC?st.rc:st.real)/meta; const pct=getRulePct(canal,grpKey,role,ating); wSum += pct*meta; w += meta; }); return w>0 ? (wSum/w) : 0; }
+  function computeGroups(rows, role){ const groups=new Map(); for(const r of rows){ const canal=normText(getField(r,'CANAL','Canal')); const cat=normText(getField(r,'CATEGORIA','Categoria')); const grpRaw=normText(getField(r,'GRUPO','Grupo')); const grpKey=normGroupKey(grpRaw); if(!grpKey) continue; const meta=getMeta(r), real=getReal(r), carteira=getCarteira(r), rc=real+carteira; const grpLabel=groupLabelFromKey(grpRaw); const g=groups.get(grpKey)||{key:grpKey,name:grpLabel,meta:0,real:0,carteira:0,rc:0,canals:new Map(),cats:new Map()}; g.meta+=meta; g.real+=real; g.carteira+=carteira; g.rc+=rc; const gs=g.canals.get(canal)||{meta:0,real:0,rc:0}; gs.meta+=meta; gs.real+=real; gs.rc+=rc; g.canals.set(canal,gs); const ct=g.cats.get(cat)||{cat,meta:0,real:0,carteira:0,rc:0,canals:new Map()}; ct.meta+=meta; ct.real+=real; ct.carteira+=carteira; ct.rc+=rc; const cs=ct.canals.get(canal)||{meta:0,real:0,rc:0}; cs.meta+=meta; cs.real+=real; cs.rc+=rc; ct.canals.set(canal,cs); g.cats.set(cat,ct); groups.set(grpKey,g); } return groups; }
+  function setRing(elId, value, r){ const el=document.getElementById(elId); if(!el) return; const v=Math.max(0,Math.min(1.25,value||0)); const circ=2*Math.PI*r; const dash=Math.min(circ,circ*v); el.setAttribute('stroke-dasharray', `${dash} ${circ}`); const pct=(value||0)*100; let color='var(--warn)'; if(pct>=100) color='var(--ok)'; else if(pct>=99.9) color='var(--mid)'; el.setAttribute('stroke', getComputedStyle(document.documentElement).getPropertyValue(color).trim() || color); }
+  function goOpp(params){ const q=new URLSearchParams(); q.set('from','rvv'); const g=$('#f_ger')?.value||'', c=$('#f_coord')?.value||'', v=$('#f_vend')?.value||''; if(g) q.set('ger',g); if(c) q.set('coord',c); if(v) q.set('vend',v); if(params?.cat) q.set('cat',params.cat); if(params?.need!=null) q.set('need', String(Math.round(params.need))); q.set('tipo','REC'); window.location.href='oportunidades.html?'+q.toString(); }
+  function renderAll(){ const rows=currentRows(); const role=detectRole(); const groups=computeGroups(rows,role); const gArr=[...groups.values()].sort((a,b)=>groupSortKey(a.key)-groupSortKey(b.key)||groupDisplayName(a.name).localeCompare(groupDisplayName(b.name),'pt-BR')); const metaTot=sum(gArr.map(g=>g.meta)), realTot=sum(gArr.map(g=>g.real)), rcTot=sum(gArr.map(g=>g.rc)); const atingReal=metaTot>0?realTot/metaTot:0, atingRC=metaTot>0?rcTot/metaTot:0; $('#kpiAtingReal').textContent=pctStr(atingReal,2); $('#kpiAtingRC').textContent=pctStr(atingRC,2); setRing('ringReal',atingReal,28); setRing('ringRC',atingRC,28); $('#diagBox').textContent = `Registros filtrados: ${rows.length} · Grupos encontrados: ${gArr.map(g=>groupDisplayName(g.name)).join(', ') || 'nenhum'}`;
+    const missingBox=document.getElementById('missingList'); if(missingBox){ missingBox.innerHTML=''; gArr.forEach(g=>{ const faltam=(g.meta||0)-(g.real||0); const row=document.createElement('div'); row.className='miss-row'; row.innerHTML=`<div class="left">${groupDisplayName(g.name)}</div><div class="right"><div class="need" style="${faltam>0?'color:var(--warn)':'color:var(--ok)'}">${faltam>0?('faltam '+fmtInt(faltam)+' kg'):'✅ meta batida'}</div><div class="car">carteira: ${fmtInt(g.carteira||0)} kg</div></div>`; row.addEventListener('click',()=>goOpp({cat:'',need:Math.max(0,faltam)})); missingBox.appendChild(row); }); }
+    let rvvSumReal=0, rvvSumRC=0, multiCanalFlag=false; const tb=$('#catTbl tbody'); tb.innerHTML=''; if(!gArr.length){ tb.innerHTML='<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--muted)">Sem dados para o filtro.</td></tr>'; } else { gArr.forEach((g,idx)=>{ if(g.canals.size>1) multiCanalFlag=true; const atR=g.meta>0?g.real/g.meta:0, atRC=g.meta>0?g.rc/g.meta:0, rvvReal=groupPctWeighted(g.key,g.canals,role,false), rvvRC=groupPctWeighted(g.key,g.canals,role,true); rvvSumReal+=rvvReal; rvvSumRC+=rvvRC; const rowId='g'+idx; const tr=document.createElement('tr'); tr.innerHTML=`<td>${groupDisplayName(g.name)}</td><td class="num">${fmtInt(g.meta)}</td><td class="num">${fmtInt(g.real)}</td><td class="num ${perfClass(atR)}">${pctStr(atR,2)}</td><td class="num ${rvvReal>=0.95?'rvv-hit':''}">${rvvReal>=0.95?'✅ ':''}${pctStr(rvvReal,2)}</td><td class="num">${fmtInt(g.rc)}</td><td class="num ${perfClass(atRC)}">${pctStr(atRC,2)}</td><td class="num ${rvvRC>=0.95?'rvv-hit':''}">${rvvRC>=0.95?'✅ ':''}${pctStr(rvvRC,2)}</td><td class="num"><button class="row-toggle" data-target="${rowId}">▾</button></td>`; const dtr=document.createElement('tr'); dtr.className='details-row'; dtr.id=rowId; dtr.style.display='none'; const cats=[...g.cats.values()].sort((a,b)=>(''+a.cat).localeCompare((''+b.cat),'pt-BR')); const catRows=cats.map(c=>{ const atCat=c.meta>0?c.real/c.meta:0, atRCCat=c.meta>0?c.rc/c.meta:0, catRvvRC=categoryPctWeighted(g.key,c.canals,role,true), faltaCat=Math.max(0,(c.meta||0)-(c.real||0)); return `<tr class="sub-link" data-cat="${String(c.cat).replace(/"/g,'&quot;')}" data-need="${Math.round(faltaCat)}"><td>${c.cat}</td><td class="num">${fmtInt(c.meta)}</td><td class="num">${fmtInt(c.real)}</td><td class="num">${fmtInt(c.carteira||0)}</td><td class="num">${fmtInt(c.rc||0)}</td><td class="num ${perfClass(atCat)}">${pctStr(atCat,2)}</td><td class="num ${perfClass(atRCCat)}">${pctStr(atRCCat,2)}</td><td class="num ${catRvvRC>=0.95?'rvv-hit':''}">${catRvvRC>=0.95?'✅ ':''}${pctStr(catRvvRC,2)}</td></tr>`; }).join(''); dtr.innerHTML=`<td colspan="9"><div class="detail-scroll"><table class="subtbl"><thead><tr><th>Categoria</th><th class="num">Meta</th><th class="num">Real</th><th class="num">Carteira</th><th class="num">R+C</th><th class="num">Ating. Real</th><th class="num">Ating. R+C</th><th class="num">%RVV R+C</th></tr></thead><tbody>${catRows}</tbody></table></div></td>`; tb.appendChild(tr); tb.appendChild(dtr); }); tb.querySelectorAll('.row-toggle').forEach(btn=>btn.addEventListener('click',e=>{ e.preventDefault(); const id=btn.dataset.target; const row=document.getElementById(id); const open=row&&row.style.display!=='none'; if(row) row.style.display=open?'none':'table-row'; btn.textContent=open?'▾':'▴'; })); tb.querySelectorAll('tr.sub-link').forEach(tr=>tr.addEventListener('click',e=>{ e.stopPropagation(); const cat=tr.getAttribute('data-cat')||''; const need=Number(tr.getAttribute('data-need')||0); goOpp({cat,need}); })); }
+    $('#kpiRvvSumReal').textContent=pctStr(rvvSumReal,2); $('#kpiRvvSumRC').textContent=pctStr(rvvSumRC,2); $('#canalWarn').style.display=multiCanalFlag?'block':'none'; }
+  async function boot(){ try{ await loadRules(); await loadBase(); window.__PFV_SYNC__ = window.__PFV_SYNC__ || pfvBindFilterSync({ ger:{id:'f_ger',allowCreate:true}, coord:{id:'f_coord',allowCreate:true}, vend:{id:'f_vend',allowCreate:true}, cat:{id:'f_cat',allowCreate:true} }); buildFilters(); window.__PFV_SYNC__.applyFromStorage(); document.querySelectorAll('.filters select[multiple]').forEach(syncMultiSelectUI); window.__PFV_SYNC__.saveToStorage(); renderAll(); }catch(e){ console.error(e); const tb=document.querySelector('#catTbl tbody'); if(tb) tb.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--warn);font-weight:700">${e.message||e}</td></tr>`; } }
+  (function(){ const nav=document.getElementById('navbar'), toggle=document.getElementById('navToggle'); if(nav&&toggle){ toggle.addEventListener('click',e=>{ e.preventDefault(); e.stopPropagation(); nav.classList.toggle('active'); nav.style.display=nav.classList.contains('active')?'flex':''; },true); document.addEventListener('click',e=>{ if(e&&(e.target===toggle||toggle.contains(e.target))) return; if(nav.classList.contains('active')){ nav.classList.remove('active'); nav.style.display=''; } },true); nav.addEventListener('click',e=>e.stopPropagation(),true); }
+    $('#btnToggleFilters')?.addEventListener('click',()=>{ const box=$('#filtersBox'); const collapsed=box.classList.toggle('collapsed'); $('#btnToggleFilters').textContent=collapsed?'Mostrar':'Ocultar'; });
+    $('#btnReload')?.addEventListener('click',boot); $('#btnClear')?.addEventListener('click',()=>{ $$('.filters select[multiple]').forEach(s=>{ Array.from(s.options).forEach(o=>o.selected=false); syncMultiSelectUI(s); }); try{localStorage.removeItem(PFV_FILTERS_KEY);sessionStorage.removeItem('pfv_link');}catch(e){} renderAll(); }); ['#f_ger','#f_coord','#f_vend','#f_cat'].forEach(id=>$(id)?.addEventListener('change',()=>{ window.__PFV_SYNC__?.saveToStorage(); renderAll(); })); ['#f_ger','#f_coord','#f_vend','#f_cat'].forEach(id=>$(id)?.addEventListener('input',()=>{ window.__PFV_SYNC__?.saveToStorage(); renderAll(); })); })();
+  console.info('RVV corrigido v3 carregado');
+  boot();
+</script>
+<!-- PATCH RVV: botão expansível para visualizar regras -->
+<style>
+  .rvv-rules-box{margin-top:14px;border:1px solid #e5e7eb;border-radius:12px;background:#fff;box-shadow:0 10px 18px rgba(26,26,46,.08);padding:12px}
+  .rvv-rules-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .rvv-rules-head h3{margin:0;font-size:14px;font-weight:700}
+  .rvv-rules-content{display:none;margin-top:10px}
+  .rvv-rules-content.open{display:block}
+  .rvv-rules-note{color:#6b7280;font-size:11px;margin:6px 0 10px 0}
+  .rvv-rules-note strong{color:#1a1a2e}
+  .rvv-rules-tag{display:inline-block;padding:2px 8px;border-radius:999px;background:rgba(79,172,254,.10);color:#0080ff;font-weight:800;font-size:10px;text-transform:uppercase;letter-spacing:.3px}
+  #rvvRulesTbl .num{text-align:right;font-weight:700}
+</style>
+<script>
+(function(){
+  if(window.__RVV_RULES_EXPAND_PATCH__) return;
+  window.__RVV_RULES_EXPAND_PATCH__ = true;
+  function bandLabel(a){
+    if(!(a>0.95)) return 'Abaixo de 95%';
+    if(a<1) return '>95% e <100%';
+    if(a<1.10) return '100% a <110%';
+    return '>=110%';
+  }
+  function getRuleArr(canal, grpKey, cargo){
+    return STATE?.RULES?.[up(canal)]?.[up(cargo)]?.[normGroupKey(grpKey)] || [0,0,0];
+  }
+  function ensureRulesBox(){
+    if(document.getElementById('rvvRulesBox')) return;
+    const anchor = document.querySelector('.wrap > .cat-box:last-of-type');
+    if(!anchor) return;
+    anchor.insertAdjacentHTML('afterend', `
+      <div class="rvv-rules-box" id="rvvRulesBox">
+        <div class="rvv-rules-head">
+          <h3>🔎 Regras de RVV</h3>
+          <button id="btnToggleRvvRules" class="btn" type="button">Mostrar regras</button>
+        </div>
+        <div id="rvvRulesContent" class="rvv-rules-content">
+          <div id="rvvRulesInfo" class="rvv-rules-note"></div>
+          <div class="tbl-container">
+            <table class="tbl" id="rvvRulesTbl">
+              <thead>
+                <tr>
+                  <th>Grupo</th>
+                  <th>Canal</th>
+                  <th>Cargo</th>
+                  <th class="num">Regra >95% e <100%</th>
+                  <th class="num">Regra 100% a <110%</th>
+                  <th class="num">Regra >=110%</th>
+                  <th class="num">Ating. Real</th>
+                  <th>Faixa Real</th>
+                  <th class="num">%RVV Real</th>
+                  <th class="num">Ating. R+C</th>
+                  <th>Faixa R+C</th>
+                  <th class="num">%RVV R+C</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="rvv-rules-note">
+            <strong>Leitura:</strong> a tabela mostra as regras cadastradas para o <strong>cargo aplicado</strong> no filtro atual e a faixa efetivamente usada no cálculo de cada grupo/canal.
+          </div>
+        </div>
+      </div>
+    `);
+  }
+  function renderRulesPanel(){
+    const content = document.getElementById('rvvRulesContent');
+    const info = document.getElementById('rvvRulesInfo');
+    const tbody = document.querySelector('#rvvRulesTbl tbody');
+    if(!content || !info || !tbody) return;
+    const rows = typeof currentRows === 'function' ? currentRows() : [];
+    const role = typeof detectRole === 'function' ? detectRole() : 'VENDEDOR';
+    const groups = typeof computeGroups === 'function' ? computeGroups(rows, role) : new Map();
+    const gArr = [...groups.values()].sort((a,b)=>groupSortKey(a.key)-groupSortKey(b.key)||groupDisplayName(a.name).localeCompare(groupDisplayName(b.name),'pt-BR'));
+    info.innerHTML = `Cargo aplicado: <span class="rvv-rules-tag">${role}</span> · Registros filtrados: <strong>${rows.length}</strong> · Linhas exibidas: <strong>${gArr.reduce((acc,g)=>acc+g.canals.size,0)}</strong>`;
+    tbody.innerHTML = '';
+    if(!gArr.length){
+      tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:20px;color:#6b7280">Sem dados para o filtro atual.</td></tr>';
+      return;
+    }
+    gArr.forEach(g=>{
+      [...g.canals.entries()].sort((a,b)=>String(a[0]).localeCompare(String(b[0]),'pt-BR')).forEach(([canal, st])=>{
+        const arr = getRuleArr(canal, g.key, role);
+        const atR = st.meta>0 ? st.real/st.meta : 0;
+        const atRC = st.meta>0 ? st.rc/st.meta : 0;
+        const rvvReal = typeof getRulePct === 'function' ? getRulePct(canal, g.key, role, atR) : 0;
+        const rvvRC = typeof getRulePct === 'function' ? getRulePct(canal, g.key, role, atRC) : 0;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${groupDisplayName(g.name)}</td>
+          <td>${canal || '-'}</td>
+          <td>${role}</td>
+          <td class="num">${pctStr(arr[0]||0,2)}</td>
+          <td class="num">${pctStr(arr[1]||0,2)}</td>
+          <td class="num">${pctStr(arr[2]||0,2)}</td>
+          <td class="num ${perfClass(atR)}">${pctStr(atR,2)}</td>
+          <td>${bandLabel(atR)}</td>
+          <td class="num">${pctStr(rvvReal,2)}</td>
+          <td class="num ${perfClass(atRC)}">${pctStr(atRC,2)}</td>
+          <td>${bandLabel(atRC)}</td>
+          <td class="num">${pctStr(rvvRC,2)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    });
+  }
+  function bindRulesButton(){
+    ensureRulesBox();
+    const btn = document.getElementById('btnToggleRvvRules');
+    const content = document.getElementById('rvvRulesContent');
+    if(!btn || !content || btn.__rvvBound) return;
+    btn.__rvvBound = true;
+    btn.addEventListener('click', ()=>{
+      const open = content.classList.toggle('open');
+      btn.textContent = open ? 'Ocultar regras' : 'Mostrar regras';
+      if(open) renderRulesPanel();
+    });
+  }
+  function patchRenderAll(){
+    if(typeof renderAll !== 'function' || window.__RVV_OLD_RENDER_ALL__) return;
+    window.__RVV_OLD_RENDER_ALL__ = renderAll;
+    renderAll = function(){
+      window.__RVV_OLD_RENDER_ALL__();
+      bindRulesButton();
+      const content = document.getElementById('rvvRulesContent');
+      if(content && content.classList.contains('open')) renderRulesPanel();
+    };
+  }
+  function initRulesPatch(){
+    bindRulesButton();
+    patchRenderAll();
+    const content = document.getElementById('rvvRulesContent');
+    if(content && content.classList.contains('open')) renderRulesPanel();
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initRulesPatch);
+  else initRulesPatch();
+})();
+</script>
+
+<script>
+/* ===== PFV: última atualização da base via ultima_atualizacao.json =====
+   Script robusto: cria o campo no cabeçalho automaticamente e lê a chave "Base Rvv - Dados.xlsx" no JSON.
+*/
+(function(){
+  const BASE_KEY = 'Base Rvv - Dados.xlsx';
+  const JSON_URL = 'ultima_atualizacao.json';
+
+  function ensureElement(){
+    let el = document.getElementById('lastUpdated');
+    if(el) return el;
+    const h1 = document.querySelector('header.topbar h1');
+    if(!h1) return null;
+    let wrap = h1.closest('.brand-block');
+    if(!wrap){
+      wrap = document.createElement('div');
+      wrap.className = 'brand-block';
+      h1.parentNode.insertBefore(wrap, h1);
+      wrap.appendChild(h1);
+    }
+    el = document.createElement('div');
+    el.className = 'last-updated loading';
+    el.id = 'lastUpdated';
+    el.textContent = 'Consultando atualização da base...';
+    wrap.appendChild(el);
+    return el;
+  }
+
+  function formatDate(value){
+    if(value === undefined || value === null || String(value).trim() === '') return null;
+    const d = new Date(value);
+    if(isNaN(d.getTime()) || d.getTime() <= 0) return null;
+    return d.toLocaleString('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+  }
+
+  function setText(txt, cls){
+    const el = ensureElement();
+    if(!el) return;
+    el.classList.remove('loading','error');
+    if(cls) el.classList.add(cls);
+    el.textContent = txt;
+  }
+
+  async function run(){
+    try{
+      const resp = await fetch(JSON_URL + '?v=' + Date.now(), { cache: 'no-store' });
+      if(!resp.ok) throw new Error('HTTP ' + resp.status + ' ao carregar ' + JSON_URL);
+      const info = await resp.json();
+      const raw = info && info[BASE_KEY];
+      const formatted = formatDate(raw);
+      if(!formatted) throw new Error('Data vazia ou inválida para ' + BASE_KEY);
+      setText('Última atualização da base: ' + formatted, '');
+    }catch(err){
+      console.warn('Não foi possível obter a última atualização da base:', err);
+      setText('Última atualização da base não encontrada', 'error');
+    }
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){ ensureElement(); run(); });
+  }else{
+    ensureElement();
+    run();
+  }
+})();
+</script>
+
+</body>
+</html>

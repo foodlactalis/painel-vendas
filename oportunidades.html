@@ -1,0 +1,1044 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard Executivo de Vendas — Versão Revisada</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <style>
+    :root{--bg:#f4f7fb;--ink:#172033;--muted:#64748b;--line:#dbe3ee;--shadow:0 8px 20px rgba(15,23,42,.06);--accent:#2563eb;--accent-dark:#1d4ed8;--ok:#059669;--mid:#d97706;--warn:#dc2626;--chip:#eff6ff;--chip-bd:#bfdbfe;--header:#0f172a;--header-light:#1e293b;--card:#ffffff;--critical:#dc2626;--attention:#d97706;--stable:#059669}
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,#f8fafc 0%,var(--bg) 320px);color:var(--ink);font:13px/1.35 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;}
+    
+    header.topbar{background:linear-gradient(135deg,var(--header) 0%,var(--header-light) 100%);color:#fff;padding:0;border-bottom:1px solid rgba(255,255,255,.1);position:sticky;top:0;z-index:20;box-shadow:var(--shadow);}
+    .header-container{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;max-width:1400px;margin:0 auto;width:100%;}
+    header.topbar h1{margin:0;font-size:16px;letter-spacing:.5px;text-transform:uppercase;font-weight:700;background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    
+    nav.navbar{display:flex;gap:20px;align-items:center;}
+    nav.navbar a{color:#4facfe;text-decoration:none;font-size:12px;font-weight:500;padding:6px 12px;border-radius:8px;transition:all 0.3s ease;position:relative;}
+    nav.navbar a:hover{color:#00f2fe;background:rgba(79,172,254,.1);}
+    nav.navbar a.active{color:#00f2fe;background:rgba(79,172,254,.15);border-bottom:2px solid #00f2fe;}
+    .nav-toggle{display:none;background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:4px 8px;}
+
+    .wrap{padding:22px 20px 36px;max-width:1400px;margin:0 auto;}
+    .page-intro{margin:0 0 14px}.page-intro h2{margin:0;color:var(--ink);font-size:20px;letter-spacing:-.3px}.page-intro p{margin:4px 0 0;color:var(--muted);font-size:12px}.filter-summary{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.filter-summary:empty{display:none}
+    .page-intro{padding:2px 4px 8px}.page-intro .executive-meta{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap;margin-top:9px}.filter-marker{display:inline-flex;align-items:center;gap:5px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:999px;padding:5px 9px;font-size:10px;font-weight:800}.client-search{height:31px;border:1px solid var(--line);border-radius:7px;padding:0 8px;font-size:10px;background:#fff}.client-search:focus{border-color:#2563eb;outline:none;box-shadow:0 0 0 2px rgba(37,99,235,.12)}.executive-meta .meta-pill{background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 10px;color:var(--muted);font-size:11px;font-weight:700}.executive-meta .meta-pill strong{color:var(--ink)}
+    .filters-box{position:fixed;right:0;top:76px;width:360px;max-width:calc(100vw - 18px);z-index:40;border-radius:14px 0 0 14px;transition:transform .25s ease;box-shadow:-12px 12px 30px rgba(15,23,42,.16)}.filters-box.collapsed{transform:translateX(calc(100% - 50px))}.filters-box.collapsed .filters-head{padding-left:4px}.filters-box .filters-head{min-height:30px}.filters-box .filters-head .sub{max-width:230px}.filters-box:not(.collapsed) .filters-grid{max-height:calc(100vh - 235px);overflow:auto}.filters-box .filters-actions{position:sticky;bottom:0;background:#fff}.filter-drawer-label{display:inline-flex;align-items:center;gap:6px;background:#2563eb;color:#fff;border-radius:8px;padding:8px 10px;font-size:11px;font-weight:800;cursor:pointer}.filter-count{background:#dbeafe;color:#1d4ed8;border-radius:999px;padding:2px 6px;font-size:10px}.diagnostic-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.diagnostic-item{border:1px solid var(--line);border-radius:10px;padding:12px;background:#fff;min-height:82px}.diagnostic-item.good{border-left:4px solid var(--ok)}.diagnostic-item.warn{border-left:4px solid var(--attention)}.diagnostic-item.bad{border-left:4px solid var(--warn)}.diagnostic-item .diag-label{font-size:10px;color:var(--muted);font-weight:800;text-transform:uppercase}.diagnostic-item .diag-text{font-size:12px;color:var(--ink);font-weight:700;margin-top:5px}.detail-toolbar{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-bottom:10px}.detail-toolbar input{height:32px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font-size:11px;min-width:220px}.detail-toolbar button{height:32px}.sortable{cursor:pointer}.sortable:hover{color:#2563eb}@media(max-width:900px){.diagnostic-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.filters-box{top:62px;width:calc(100vw - 8px)}.diagnostic-grid{grid-template-columns:1fr}}
+    .panel{border:1px solid var(--line);border-radius:14px;background:var(--card);box-shadow:var(--shadow);padding:16px}.panel+.panel{margin-top:14px}
+    
+    .filters-box.collapsed .filters-grid,.filters-box.collapsed .filters-actions{display:none}
+    .filters-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.filters-head .t{font-weight:800;font-size:14px;color:var(--ink);}.filters-head .sub{font-size:11px;color:var(--muted);font-weight:500;margin-top:2px}
+    .filters-actions-top{display:flex;gap:12px;align-items:center}.link{font-size:11px;color:var(--accent);cursor:pointer;user-select:none;font-weight:500;transition:color 0.2s;}.link:hover{color:var(--accent-dark);}
+    
+    .filters-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;align-items:start;margin-top:14px;}
+    .filters-grid label{display:flex;flex-direction:column;gap:5px;font-size:11px;color:var(--ink);font-weight:700;}
+    .filters-grid select,.filters-grid input{height:38px;border-radius:9px;border:1px solid var(--line);background:#fff;padding:0 10px;outline:none;font-size:12px;transition:border-color 0.2s;}.filters-grid select[multiple]{height:96px;padding:6px 8px}.filters-grid select[multiple] option{padding:5px 6px;border-radius:5px}.filters-grid select[multiple] option:checked{background:#dbeafe;color:#1d4ed8;font-weight:700}
+    .filters-grid select:focus,.filters-grid input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,172,254,.1);}
+    
+    .filters-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;padding-top:12px;border-top:1px solid #eef2f7;}
+    .btn{height:32px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:11px;font-weight:600;transition:all 0.2s;}.btn:hover{border-color:var(--accent);background:rgba(79,172,254,.05);}.btn.primary{background:linear-gradient(135deg,var(--accent) 0%,var(--accent-dark) 100%);color:#fff;border:none;}.btn.primary:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(79,172,254,.3);}
+    
+    .span-2{grid-column:span 2}.span-3{grid-column:span 3}.span-4{grid-column:span 4}.span-6{grid-column:span 6}
+    
+    .segbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+    .seg{border:1px solid rgba(79,172,254,.25);background:rgba(79,172,254,.08);color:var(--accent-dark);padding:7px 12px;border-radius:10px;font-weight:700;font-size:11px;cursor:pointer;transition:all 0.2s;line-height:1}.seg:hover{background:rgba(79,172,254,.12)}.seg.active{background:linear-gradient(135deg,#4facfe,#00f2fe);border-color:transparent;color:#06101f;box-shadow:0 8px 20px rgba(79,172,254,.20)}
+    
+    .hint{padding:14px;border:1px dashed var(--line);border-radius:12px;background:#fff;color:var(--muted);font-weight:500}
+    .clients-list{display:flex;flex-direction:column;gap:12px}
+    details.client-card{border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#fff 0%,#f9fafb 100%);box-shadow:var(--shadow)}
+    details.client-card>summary{list-style:none;cursor:pointer;padding:12px} details.client-card>summary::-webkit-details-marker{display:none}
+    .client-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+    .client-name{font-size:13px;font-weight:700;line-height:1.1;color:var(--ink)}.client-sub{margin-top:2px;color:var(--muted);font-size:10px;font-weight:500}
+    .client-body{padding:0 12px 12px}
+    .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+    table.tbl{width:max-content;min-width:480px;border-collapse:collapse;font-size:10px}.tbl th,.tbl td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}.tbl th{background:#0f172a;color:#fff;text-transform:uppercase;font-size:9px;letter-spacing:.4px;position:sticky;top:0;z-index:1}.tbl td.num{text-align:right;font-weight:700}.tbl tbody tr:nth-child(even){background:#fafcff}
+    .tbl.hist th:first-child,.tbl.hist td:first-child{position:sticky;left:0;z-index:2;box-shadow:2px 0 0 var(--line)}
+    .tbl.hist th:first-child{z-index:4;background:#0f172a}
+    .tbl.hist td:first-child{background:#fff;text-align:left;font-weight:700}
+    .tbl.hist tbody tr:nth-child(even) td:first-child{background:#fafcff}
+
+    .overview-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px}
+    .overview-card{border:1px solid var(--line);border-radius:12px;padding:14px;background:linear-gradient(180deg,#fff 0%,#f9fafb 100%);position:relative;overflow:hidden;box-shadow:var(--shadow)}
+    .overview-card::before{content:'';position:absolute;top:0;right:0;width:40px;height:40px;background:rgba(79,172,254,.08);border-radius:50%;transform:translate(50%,-50%)}
+    .overview-card .icon{font-size:24px;margin-bottom:6px}
+    .overview-card .k{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+    .overview-card .v{font-size:22px;font-weight:800;color:var(--ink);margin-top:4px}
+    .overview-card .s{font-size:10px;color:var(--muted);font-weight:500;margin-top:2px}
+    .overview-card .delta{font-size:11px;font-weight:700;margin-top:4px}
+    .delta-up{color:var(--ok)}.delta-down{color:var(--warn)}
+
+    .alert-strip{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .alert-pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 10px;font-size:10px;font-weight:700;border:1px solid var(--line);background:#fff}
+    .alert-pill.critical{border-color:rgba(239,68,68,.2);background:rgba(239,68,68,.08);color:#991b1b}
+    .alert-pill.stable{border-color:rgba(16,185,129,.25);background:rgba(16,185,129,.08);color:#047857}
+
+    .analise-container{display:flex;flex-direction:column;gap:12px}
+    .chart-section{border:1px solid var(--line);border-radius:12px;background:#fff;padding:14px;box-shadow:var(--shadow)}
+    .chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .chart-header .title{font-size:13px;font-weight:700;color:var(--ink);text-transform:uppercase;letter-spacing:.3px}
+    .chart-wrapper{position:relative;height:300px;margin-bottom:10px}
+    .donut-wrapper{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:center}
+    .donut-canvas{position:relative;height:250px}
+    .donut-legend{display:flex;flex-direction:column;gap:8px}
+    .legend-item{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:600}
+    .legend-color{width:12px;height:12px;border-radius:2px}
+    
+    .insights-section{display:flex;flex-direction:column;gap:8px}
+    .insight-item{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:#f9fafb;border-left:4px solid var(--accent);cursor:pointer;transition:all 0.2s;}
+    .insight-item:hover{background:#f3f4f6;}
+    .insight-item.critical{border-left-color:var(--critical);background:#fef2f2}
+    .insight-item.stable{border-left-color:var(--stable);background:#f0fdf4}
+    .insight-head{display:flex;gap:10px;align-items:center;user-select:none}
+    .insight-icon{font-size:18px;flex-shrink:0}
+    .insight-text{font-size:11px;font-weight:700;color:var(--ink);flex:1}
+    .insight-toggle{font-size:12px;color:var(--muted);font-weight:700;transition:transform 0.3s;}
+    .insight-detail{display:none;margin-top:10px;padding-top:10px;border-top:1px solid rgba(0,0,0,0.05)}
+    .insight-item.open .insight-detail{display:block}
+    .insight-item.open .insight-toggle{transform:rotate(180deg)}
+    
+    .mini-table{width:100%;border-collapse:collapse;font-size:9px;background:#fff;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+    .mini-table th{background:#f1f5f9;padding:6px;text-align:left;font-weight:700}
+    .mini-table td{padding:6px;border-bottom:1px solid var(--line)}
+    .mini-table .val{text-align:right;font-weight:700}
+
+    .performance-table{width:100%;border-collapse:collapse;font-size:10px}
+    .performance-table th{background:#f3f5fb;padding:10px 8px;text-align:left;font-weight:700;color:var(--ink);border-bottom:2px solid var(--line);text-transform:uppercase;letter-spacing:0.4px}
+    .performance-table td{padding:10px 8px;border-bottom:1px solid var(--line)}
+    .performance-table .cat-name{font-weight:700;color:var(--accent-dark)}
+    .performance-table .num-cell{text-align:right;font-weight:700}
+    .performance-table .status-cell{text-align:center}
+    .loss-badge{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:4px 10px;font-size:9px;font-weight:700;border:1px solid var(--line);background:#fff}
+    .loss-badge.critical{color:#991b1b;border-color:rgba(239,68,68,.2);background:rgba(239,68,68,.08)}
+    .loss-badge.stable{color:#047857;border-color:rgba(16,185,129,.25);background:rgba(16,185,129,.08)}
+
+    .secondary-charts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+    @media (max-width:1024px){
+      .filters-grid{grid-template-columns:repeat(2,1fr)}
+      .span-2,.span-3,.span-4,.span-6{grid-column:auto}
+      .overview-grid{grid-template-columns:repeat(2,1fr)}
+      .donut-wrapper,.secondary-charts{grid-template-columns:1fr}
+    }
+    @media (max-width:768px){
+      .header-container{padding:12px 14px;}
+      header.topbar h1{font-size:14px;}
+      nav.navbar{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;gap:0;background:var(--header-light);border-bottom:1px solid rgba(255,255,255,.1);padding:10px 0;}
+      nav.navbar.active{display:flex;}
+      nav.navbar a{padding:12px 14px;border-radius:0;border-bottom:1px solid rgba(255,255,255,.05);}
+      .nav-toggle{display:block;}
+      .wrap{padding:12px 14px;}
+      .filters-grid{grid-template-columns:repeat(1,1fr)}
+      .overview-grid{grid-template-columns:repeat(1,1fr)}
+    }
+  
+    .month-filter-stack{display:flex;flex-direction:column;gap:6px}
+    #f_mes_ref{height:122px;padding:6px 8px}
+    #f_mes_ref option{padding:4px 6px}
+    .month-help{font-size:10px;color:var(--muted);line-height:1.25}
+    .analysis-banner{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+    .analysis-banner .title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .analysis-banner .title-row .title{font-size:13px;font-weight:800;color:var(--ink);text-transform:uppercase;letter-spacing:.3px}
+    .analysis-banner .subtitle{font-size:11px;color:var(--muted);font-weight:600}
+    .chip-row{display:flex;flex-wrap:wrap;gap:6px}
+    .client-chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 10px;font-size:10px;font-weight:700;border:1px solid var(--chip-bd);background:var(--chip);color:var(--accent-dark)}
+    .client-chip.dim{background:#fff;border-color:var(--line);color:var(--muted)}
+    .overview-grid.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .card-compare{display:flex;flex-direction:column;gap:2px;margin-top:6px}
+    .card-compare .line{font-size:10px;color:var(--muted);font-weight:700}
+    .card-compare .line strong{color:var(--ink)}
+    .compare-note{font-size:10px;color:var(--muted);font-weight:600}
+    .insight-item.attention{border-left-color:var(--attention);background:#fffbeb}
+    .loss-badge.attention{color:#92400e;border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.08)}
+    .grow-pos{color:var(--ok);font-weight:800}
+    .grow-neg{color:var(--warn);font-weight:800}
+    .grow-neutral{color:var(--muted);font-weight:800}
+    .empty-state{padding:16px;border:1px dashed var(--line);border-radius:12px;background:#fff;color:var(--muted);font-weight:600;}
+    .commercial-section{display:flex;flex-direction:column;gap:12px;margin-top:14px}.commercial-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:12px}.commercial-card{border:1px solid var(--line);border-radius:12px;background:#fff;padding:14px;box-shadow:var(--shadow)}.commercial-title{font-size:13px;font-weight:800;color:var(--ink);margin-bottom:3px}.commercial-note{font-size:10px;color:var(--muted);margin-bottom:10px}.commercial-table{width:100%;border-collapse:collapse;font-size:10px}.commercial-table th{background:#f1f5f9;color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.3px;text-align:left;padding:8px}.commercial-table td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}.commercial-table td.num{text-align:right;font-variant-numeric:tabular-nums}.commercial-table td strong{color:var(--ink)}.rank{display:inline-flex;width:20px;height:20px;border-radius:50%;align-items:center;justify-content:center;background:#eff6ff;color:#1d4ed8;font-weight:800;margin-right:5px}.bar-cell{min-width:90px}.mini-bar{height:7px;background:#dbeafe;border-radius:99px;overflow:hidden}.mini-bar span{display:block;height:100%;background:#2563eb;border-radius:99px}.commercial-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.commercial-kpi{border:1px solid var(--line);border-radius:10px;padding:11px;background:#f8fafc}.commercial-kpi .k{font-size:9px;color:var(--muted);font-weight:800;text-transform:uppercase}.commercial-kpi .v{font-size:18px;color:var(--ink);font-weight:800;margin-top:4px}.commercial-kpi .s{font-size:9px;color:var(--muted);margin-top:2px}@media(max-width:900px){.commercial-grid{grid-template-columns:1fr}.commercial-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    .dual-donut-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+    .mini-donut-card{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff}
+    .mini-donut-title{font-size:11px;font-weight:800;color:var(--ink);margin-bottom:8px;text-transform:uppercase}
+    .mini-donut-body{display:grid;grid-template-columns:180px 1fr;gap:10px;align-items:center}
+    .mini-donut-canvas{position:relative;height:200px}
+    .mini-donut-legend{display:flex;flex-direction:column;gap:6px}
+    .mini-donut-legend .legend-item{font-size:9px}
+    @media (max-width:1200px){ .overview-grid.four{grid-template-columns:repeat(2,minmax(0,1fr));} }
+    @media (max-width:1024px){ .dual-donut-grid{grid-template-columns:1fr;} .mini-donut-body{grid-template-columns:1fr;} .mini-donut-canvas{height:220px} }
+    @media (max-width:768px){ .overview-grid.four{grid-template-columns:repeat(1,minmax(0,1fr));} }
+
+  
+    .bi-section{margin-top:14px}.section-head{display:flex;align-items:end;justify-content:space-between;gap:10px;margin-bottom:10px}.section-head h3{margin:0;font-size:14px;text-transform:uppercase;letter-spacing:.25px}.section-head p{margin:2px 0 0;color:var(--muted);font-size:10px}.kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.kpi{border:1px solid var(--line);border-radius:12px;padding:13px;background:#fff}.kpi .label{font-size:9px;font-weight:800;color:var(--muted);text-transform:uppercase}.kpi .value{font-size:20px;font-weight:850;margin-top:3px}.kpi .trend{font-size:10px;margin-top:5px}.executive-list{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.exec-insight{padding:11px;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:9px;background:#fff;font-size:11px;font-weight:650}.exec-insight.risk{border-left-color:var(--warn)}.exec-insight.good{border-left-color:var(--ok)}.health-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}.health-card{padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer}.health-card:hover{border-color:#93c5fd}.health-card b{display:block;font-size:18px}.health-card span{font-size:9px;color:var(--muted)}.bi-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.bi-chart{height:280px;position:relative}.impact-table{width:100%;border-collapse:collapse;font-size:9px}.impact-table th{position:sticky;top:0;background:#0f172a;color:#fff;padding:8px;text-align:left;white-space:nowrap}.impact-table td{padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}.impact-table tr.clickable{cursor:pointer}.impact-table tr.clickable:hover{background:#eff6ff}.opp-badge{padding:3px 7px;border-radius:999px;background:#fff7ed;color:#9a3412;font-weight:800}.priority-high{color:var(--warn);font-weight:800}.priority-mid{color:var(--mid);font-weight:800}.metric-na{font-size:10px;color:var(--muted);padding:8px;border:1px dashed var(--line);border-radius:8px;background:#f8fafc}.modal{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:80;padding:28px;overflow:auto}.modal.open{display:flex;align-items:flex-start;justify-content:center}.modal-card{width:min(900px,100%);background:#fff;border-radius:16px;padding:18px;box-shadow:0 24px 70px rgba(0,0,0,.28)}.modal-head{display:flex;justify-content:space-between;align-items:start}.modal-close{border:0;background:#eef2f7;border-radius:8px;width:30px;height:30px;cursor:pointer}.seller-view{padding:11px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;font-size:11px}@media(max-width:1000px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.health-grid{grid-template-columns:repeat(3,1fr)}.bi-grid2,.executive-list{grid-template-columns:1fr}}@media(max-width:600px){.kpi-grid,.health-grid{grid-template-columns:1fr 1fr}.modal{padding:10px}}
+  
+    /* FIX: filtros visiveis e acessiveis */
+    #filtrosBox{display:block!important;position:relative!important;right:auto!important;top:auto!important;width:100%!important;max-width:none!important;margin:12px 0 16px!important;transform:none!important;overflow:visible!important;}
+    #filtrosBox.collapsed .filters-grid,#filtrosBox.collapsed .filters-actions{display:none!important;}
+    #filtrosBox:not(.collapsed) .filters-grid{display:grid!important;}
+    #filtrosBox:not(.collapsed) .filters-actions{display:flex!important;}
+    #filtrosBox .filters-head{cursor:default;}
+    @media(max-width:768px){#filtrosBox{position:relative!important;width:100%!important;}.filters-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;}}
+  
+    /* Filtros compactos: recolhidos por padrao */
+    #filtrosBox{padding:10px 12px!important;margin:8px 0 12px!important;border-radius:12px!important;}
+    #filtrosBox .filters-head{min-height:28px!important;}
+    #filtrosBox .filters-grid{grid-template-columns:repeat(5,minmax(120px,1fr))!important;gap:7px!important;margin-top:8px!important;}
+    #filtrosBox .filters-grid label{font-size:8px!important;gap:3px!important;}
+    #filtrosBox .filters-grid select{min-height:62px!important;height:62px!important;font-size:9px!important;padding:4px 6px!important;border-radius:7px!important;}
+    #filtrosBox .filters-actions{margin-top:7px!important;gap:6px!important;}
+    #filtrosBox .filters-actions button{padding:6px 9px!important;font-size:9px!important;}
+    #filtrosBox .filters-head .t{font-size:12px!important;}
+    #filtrosBox .filters-head .sub{font-size:8px!important;}
+    #filtrosBox.collapsed{padding-top:7px!important;padding-bottom:7px!important;}
+    @media(max-width:1000px){#filtrosBox .filters-grid{grid-template-columns:repeat(3,minmax(120px,1fr))!important;}}
+    @media(max-width:600px){#filtrosBox .filters-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;}#filtrosBox .filters-grid select{height:58px!important;min-height:58px!important;}}
+  
+    .decision-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}.decision-kpi{padding:15px;border:1px solid var(--line);border-radius:13px;background:#fff}.decision-kpi .dk-label{font-size:9px;color:var(--muted);font-weight:850;text-transform:uppercase}.decision-kpi .dk-value{font-size:23px;font-weight:900;margin:3px 0}.decision-kpi .dk-sub{font-size:9px;color:var(--muted)}.decision-strip{margin-top:8px;padding:8px 11px;border:1px solid var(--line);border-radius:9px;background:#f8fafc;font-size:10px}.priorities{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.priority-card{border:1px solid var(--line);border-radius:11px;padding:12px;background:#fff}.priority-card .p-tag{font-size:8px;font-weight:900;text-transform:uppercase}.priority-card .p-title{font-size:12px;font-weight:850;margin:5px 0}.priority-card .p-value{font-size:18px;font-weight:900}.priority-card .p-detail{font-size:9px;color:var(--muted);margin-top:3px}.priority-card.risk{border-top:3px solid #dc2626}.priority-card.warn{border-top:3px solid #f59e0b}.priority-card.info{border-top:3px solid #2563eb}.story-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.story-card{padding:11px;border:1px solid var(--line);border-radius:10px;background:#fff}.story-card .story-label{font-size:8px;text-transform:uppercase;font-weight:900;margin-bottom:5px}.story-card .story-text{font-size:10px;line-height:1.45}.story-good .story-label{color:#059669}.story-warn .story-label{color:#d97706}.story-risk .story-label{color:#dc2626}.story-action .story-label{color:#2563eb}.simple-opp td{vertical-align:top}.event-main{font-weight:850;font-size:10px}.event-sub{font-size:8px;color:var(--muted);margin-top:2px}.action-pill{font-size:8px;padding:4px 7px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-weight:850;white-space:nowrap}.detail-section{opacity:.98}.secondary-title{font-size:12px!important}.old-bi-top{display:none!important}@media(max-width:1000px){.decision-kpis,.story-grid{grid-template-columns:repeat(2,1fr)}.priorities{grid-template-columns:1fr}}@media(max-width:600px){.decision-kpis,.story-grid{grid-template-columns:1fr}}
+  
+    .compare-caption{margin:12px 0 7px;font-size:10px;font-weight:900;color:#334155;text-transform:uppercase;letter-spacing:.25px}.compare-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.compare-card{border:1px solid var(--line);background:#f8fafc;border-radius:10px;padding:9px 11px}.compare-card .cc-label{font-size:8px;font-weight:850;color:var(--muted);text-transform:uppercase}.compare-card .cc-values{display:flex;align-items:baseline;gap:7px;margin-top:3px;flex-wrap:wrap}.compare-card .cc-current{font-size:13px;font-weight:900}.compare-card .cc-prev{font-size:9px;color:#64748b}.compare-card .cc-var{font-size:10px;font-weight:900;margin-top:3px}.period-compare-label{font-size:9px;color:#475569;margin-top:4px;font-weight:700}@media(max-width:900px){.compare-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:520px){.compare-grid{grid-template-columns:1fr}}
+  
+    .filters-box{position:relative!important;right:auto!important;top:auto!important;width:100%!important;max-width:none!important;transform:none!important;border-radius:12px!important;box-shadow:0 4px 18px rgba(15,23,42,.07)!important;margin:10px 0 14px!important;padding:10px 12px!important}.filters-box.collapsed{transform:none!important}.filters-box.collapsed .filters-grid,.filters-box.collapsed .filters-actions{display:none!important}.filters-box:not(.collapsed) .filters-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important;max-height:none!important;overflow:visible!important}.filters-grid label{grid-column:auto!important;font-size:8px!important}.filters-grid select{height:31px!important;min-height:31px!important;font-size:9px!important;padding:3px 7px!important;border-radius:7px!important;background:#fff!important}.filters-grid select:focus{height:auto!important;min-height:96px!important;position:relative;z-index:5}.filters-actions{position:static!important;justify-content:flex-end!important;padding-top:8px!important;margin-top:4px!important}.filter-drawer-label{background:transparent!important;color:#2563eb!important;padding:4px 6px!important}.month-help{font-size:7px!important}.cat-toggle{border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:6px;padding:3px 7px;font-size:8px;font-weight:850;cursor:pointer;margin-left:6px}.month-cat-row{display:none;background:#f8fafc}.month-cat-row.open{display:table-row}.month-cat-box{padding:8px 10px}.month-cat-title{font-size:9px;font-weight:900;margin-bottom:6px}.month-cat-table{width:100%;border-collapse:collapse;font-size:8px}.month-cat-table th,.month-cat-table td{padding:5px 7px;border-bottom:1px solid #e2e8f0;text-align:left}.cat-status{font-weight:900}.cat-stop{color:#dc2626}.cat-down{color:#d97706}.cat-up{color:#059669}.cat-stable{color:#64748b}.category-alerts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.category-alert{border:1px solid var(--line);border-radius:9px;padding:9px;background:#fff}.category-alert h4{font-size:9px;margin:0 0 5px}.category-alert ul{margin:0;padding-left:16px;font-size:9px;line-height:1.5}@media(max-width:900px){.filters-box:not(.collapsed) .filters-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.category-alerts{grid-template-columns:1fr}}
+    .reading-order{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#f8fafc}.reading-step{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:10px;font-weight:700}.reading-step:not(:last-child)::after{content:'→';margin-left:4px;color:#94a3b8}.reading-step b{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#dbeafe;color:#1d4ed8;font-size:10px}.reading-section{margin-top:14px}.reading-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}.reading-card{border:1px solid var(--line);border-radius:11px;padding:12px;background:#fff}.reading-title{font-size:12px;font-weight:850;color:var(--ink)}.reading-note{font-size:9px;color:var(--muted);margin:3px 0 8px}.reading-total{font-size:10px;font-weight:800;color:#334155;margin-top:8px}.reading-table{width:100%;border-collapse:collapse;font-size:9px}.reading-table th{padding:7px 6px;background:#f1f5f9;color:var(--muted);font-size:8px;text-align:left;text-transform:uppercase}.reading-table td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}.reading-table td:not(:first-child){white-space:nowrap}.reading-metric-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}.reading-metric-strip>div{border:1px solid var(--line);border-radius:9px;background:#f8fafc;padding:10px}.reading-metric-strip span,.reading-metric-strip small{display:block;font-size:8px;color:var(--muted);font-weight:700}.reading-metric-strip strong{display:block;font-size:14px;margin:3px 0;color:var(--ink)}@media(max-width:900px){.reading-grid{grid-template-columns:1fr}.reading-metric-strip{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.reading-metric-strip{grid-template-columns:1fr}.reading-step:not(:last-child)::after{display:none}}
+    .exec-dashboard{display:flex;flex-direction:column;gap:14px}.exec-hero{border-radius:14px;background:linear-gradient(135deg,#0f172a,#1e3a5f);color:#fff;padding:18px}.exec-hero h3{margin:0;font-size:17px}.exec-hero p{margin:5px 0 0;color:#cbd5e1;font-size:11px}.exec-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.exec-summary div{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12);border-radius:9px;padding:10px}.exec-summary span{display:block;color:#cbd5e1;font-size:9px;text-transform:uppercase;font-weight:800}.exec-summary strong{display:block;margin-top:4px;font-size:12px}.exec-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.exec-kpi{border:1px solid var(--line);border-radius:12px;background:#fff;padding:13px}.exec-kpi .k{font-size:9px;color:var(--muted);font-weight:850;text-transform:uppercase}.exec-kpi .v{font-size:21px;font-weight:900;margin-top:4px}.exec-kpi .s{font-size:9px;color:var(--muted);margin-top:4px}.exec-panel{border:1px solid var(--line);border-radius:12px;background:#fff;padding:14px}.exec-panel h3{margin:0;font-size:13px}.exec-panel .sub{color:var(--muted);font-size:10px;margin:3px 0 10px}.exec-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.exec-grid3{display:grid;grid-template-columns:1.2fr .8fr;gap:12px}.exec-chart{position:relative;height:240px}.exec-alerts{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.exec-alert{padding:10px;border-radius:9px;border:1px solid var(--line);background:#f8fafc;font-size:10px}.exec-alert b{display:block;font-size:9px;text-transform:uppercase;margin-bottom:4px}.exec-alert.good{border-left:4px solid #059669}.exec-alert.warn{border-left:4px solid #d97706}.exec-alert.risk{border-left:4px solid #dc2626}.exec-alert.info{border-left:4px solid #2563eb}.exec-table{width:100%;border-collapse:collapse;font-size:10px}.exec-table th{padding:8px;background:#f1f5f9;color:var(--muted);font-size:8px;text-align:left;text-transform:uppercase}.exec-table td{padding:8px;border-bottom:1px solid var(--line)}.exec-table td.num{text-align:right;white-space:nowrap}.unavailable-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.unavailable-item{padding:10px;border:1px dashed var(--line);border-radius:9px;background:#fafafa;font-size:9px;color:var(--muted)}.unavailable-item strong{display:block;color:var(--ink);font-size:10px;margin-bottom:3px}@media(max-width:1000px){.exec-kpis{grid-template-columns:repeat(2,1fr)}.exec-grid2,.exec-grid3{grid-template-columns:1fr}.unavailable-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.exec-summary,.exec-kpis,.exec-alerts,.unavailable-grid{grid-template-columns:1fr}}
+    .dimension-grid{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:12px}.dimension-card{border:1px solid var(--line);border-radius:11px;padding:12px;background:#fff}.dimension-card h4{margin:0;font-size:12px}.dimension-card p{margin:3px 0 8px;color:var(--muted);font-size:9px}.dimension-table{width:100%;border-collapse:collapse;font-size:9px}.dimension-table th{padding:7px 6px;background:#f1f5f9;color:var(--muted);font-size:8px;text-align:left;text-transform:uppercase}.dimension-table td{padding:7px 6px;border-bottom:1px solid var(--line)}.dimension-table td.num{text-align:right;white-space:nowrap}.dim-bar{height:6px;background:#e2e8f0;border-radius:99px;margin-top:4px}.dim-bar span{display:block;height:100%;background:#2563eb;border-radius:99px}@media(max-width:1050px){.dimension-grid{grid-template-columns:1fr 1fr}}@media(max-width:650px){.dimension-grid{grid-template-columns:1fr}}
+      .reading-more{margin-top:8px}.reading-more button{border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:7px;padding:6px 9px;font-size:9px;font-weight:800;cursor:pointer}.reading-extra{display:none}.reading-extra.open{display:table-row}
+  
+/* Ajuste 2026-09-24: filtros compactos, recolhidos e com marcadores a direita */
+#filtrosBox{padding:10px 12px!important}
+#filtrosBox.collapsed .filters-grid,#filtrosBox.collapsed .filters-actions{display:none!important}
+#filtrosBox:not(.collapsed) .filters-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important;overflow:visible!important}
+#filtrosBox .filters-grid label{font-size:9px!important;gap:4px!important}
+#filtrosBox .multi-filter{position:relative;width:100%}
+#filtrosBox .multi-filter-select{display:none!important}
+#filtrosBox .multi-filter-button{height:31px;width:100%;border:1px solid var(--line);border-radius:7px;background:#fff;padding:0 9px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:9px;color:var(--ink);cursor:pointer;text-align:left}
+#filtrosBox .multi-filter-button.open{border-color:var(--accent);box-shadow:0 0 0 2px rgba(37,99,235,.10)}
+#filtrosBox .multi-filter-button .mf-caret{font-size:9px;color:#64748b;transition:transform .15s}
+#filtrosBox .multi-filter-button.open .mf-caret{transform:rotate(180deg)}
+#filtrosBox .multi-filter-menu{display:none;position:absolute;top:35px;left:0;right:0;z-index:70;background:#fff;border:1px solid #dbe3ee;border-radius:8px;box-shadow:0 10px 26px rgba(15,23,42,.16);max-height:230px;overflow:auto;padding:4px}
+#filtrosBox .multi-filter-menu.open{display:block}
+#filtrosBox .mf-option{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:31px;padding:6px 7px;border-bottom:1px solid #eef2f7;font-size:9px;font-weight:500;color:#334155;cursor:pointer}
+#filtrosBox .mf-option:last-child{border-bottom:0}
+#filtrosBox .mf-option:hover{background:#f8fafc}
+#filtrosBox .mf-check{width:14px;height:14px;accent-color:#2563eb;flex:0 0 auto;pointer-events:none}
+#filtrosBox .client-search{height:31px!important;width:100%;font-size:9px!important}
+#filtrosBox .month-help{display:none!important}
+#filtrosBox .filters-actions{padding-top:7px!important;margin-top:7px!important}
+@media(max-width:900px){#filtrosBox:not(.collapsed) .filters-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:520px){#filtrosBox:not(.collapsed) .filters-grid{grid-template-columns:1fr!important}}
+
+.product-extra.is-extra{display:none}
+
+/* AJUSTE V2: largura total das tabelas e share por categoria no final */
+.wrap{max-width:none!important;width:100%!important;padding-left:12px!important;padding-right:12px!important}
+#contentPanel{width:100%!important}
+.table-wrap{width:100%!important;max-width:none!important;overflow-x:auto!important}
+table.tbl,.performance-table,.commercial-table,.impact-table,.reading-table,.exec-table,.dimension-table,.month-cat-table,.mini-table{width:100%!important;max-width:none!important}
+.exec-grid3,.exec-grid2,.reading-grid,.commercial-grid{width:100%!important}
+.dimension-grid{grid-template-columns:1fr!important;width:100%!important}
+.dimension-card{width:100%!important;min-width:0!important;overflow:hidden}
+.exec-panel{width:100%!important;min-width:0!important}
+.share-final-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%}
+.share-final-card{border:1px solid var(--line);border-radius:12px;background:#fff;padding:14px;min-width:0}
+.share-final-card h4{margin:0 0 3px;font-size:12px}.share-final-card p{margin:0 0 10px;color:var(--muted);font-size:9px}
+.share-pie-wrap{position:relative;height:390px;width:100%}
+.share-table{width:100%;border-collapse:collapse;font-size:9px;margin-top:10px}
+.share-table th{background:#f1f5f9;color:#64748b;text-transform:uppercase;font-size:8px;text-align:left;padding:7px}
+.share-table td{padding:7px;border-bottom:1px solid var(--line)}.share-table td.num{text-align:right;font-weight:700;white-space:nowrap}
+.share-swatch{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+@media(max-width:900px){.share-final-grid{grid-template-columns:1fr}.share-pie-wrap{height:340px}}
+
+</style>
+
+<style>
+/* Camada estratégica: hierarquia, priorização e leitura executiva */
+:root{--navy:#10233f;--blue:#1f6feb;--blue-soft:#eaf2ff;--green:#07865b;--amber:#b76800;--red:#c23b3b;--surface:#f5f7fb}
+body{background:#eef2f7!important;color:#172033!important}.wrap{padding:16px 18px 34px!important}.page-intro{display:none!important}#contentPanel{border:0!important;background:transparent!important;box-shadow:none!important;padding:0!important}.strategy-dashboard{display:flex;flex-direction:column;gap:14px}.strategy-hero{display:grid;grid-template-columns:1fr 280px;gap:22px;align-items:center;background:linear-gradient(135deg,#10233f,#183f6f);color:#fff;border-radius:16px;padding:22px 24px;box-shadow:0 12px 30px rgba(16,35,63,.16)}.strategy-hero h2{font-size:23px;line-height:1.15;margin:5px 0 7px;max-width:820px}.strategy-hero p{margin:0;color:#cbd9eb;font-size:11px;max-width:850px}.eyebrow{font-size:9px;font-weight:900;letter-spacing:.9px;color:#6ea8fe}.hero-result{border-left:1px solid rgba(255,255,255,.18);padding-left:22px}.hero-result span,.hero-result small{display:block;color:#cbd9eb;font-size:9px}.hero-result strong{display:block;font-size:31px;margin:3px 0}.strategy-kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}.strategy-kpi{background:#fff;border:1px solid #dbe3ee;border-radius:12px;padding:13px;min-width:0}.strategy-kpi>span:first-child{display:block;color:#64748b;font-size:9px;font-weight:850;text-transform:uppercase}.strategy-kpi>strong{display:block;font-size:19px;margin:5px 0;color:#10233f}.strategy-kpi small{display:block;color:#64748b;font-size:8px;margin-top:5px}.strategy-badge{display:inline-flex;border-radius:999px;padding:3px 7px;font-size:8px;font-weight:850;background:#eef2f7;color:#64748b}.strategy-badge.good{background:#e8f7f0;color:#06734e}.strategy-badge.bad{background:#fff0f0;color:#b12f2f}.strategy-badge.attention{background:#fff6e7;color:#9b5a00}.strategy-panel{background:#fff;border:1px solid #dbe3ee;border-radius:14px;padding:15px;box-shadow:0 5px 16px rgba(15,23,42,.05)}.strategy-title{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:11px}.strategy-title h3{font-size:14px;margin:2px 0 0;color:#10233f}.strategy-title p,.method-note{margin:0;color:#64748b;font-size:9px}.decision-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.decision-card{padding:14px;border-radius:11px;background:#f8fafc;border-left:4px solid #94a3b8}.decision-card.critical{border-left-color:var(--red)}.decision-card.attention{border-left-color:#e49a21}.decision-card.opportunity{border-left-color:var(--blue)}.decision-card span{font-size:9px;font-weight:850;text-transform:uppercase;color:#64748b}.decision-card strong{display:block;font-size:21px;margin:4px 0;color:#10233f}.decision-card p{font-size:9px;color:#64748b;margin:0}.strategy-grid.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}.strategy-table{width:100%;border-collapse:collapse;font-size:9px}.strategy-table th{background:#edf3fb;color:#38506d;text-align:right;padding:8px;font-size:8px;text-transform:uppercase;position:sticky;top:0}.strategy-table th:first-child,.strategy-table th:nth-child(2){text-align:left}.strategy-table td{padding:8px;border-bottom:1px solid #e7edf5;text-align:right;vertical-align:top}.strategy-table td.left{text-align:left}.strategy-table td small{display:block;color:#718096;font-size:8px;margin-top:2px}.action-status{display:inline-flex;border-radius:999px;padding:4px 7px;font-size:8px;font-weight:850}.action-status.critical{background:#fff0f0;color:#b12f2f}.action-status.attention{background:#fff6e7;color:#9b5a00}.action-status.opportunity{background:#eaf2ff;color:#1755a6}.quadrant-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.quadrant{border-radius:11px;padding:13px;background:#f8fafc;border-top:4px solid #94a3b8}.quadrant span{font-size:9px;font-weight:900;text-transform:uppercase}.quadrant strong{display:block;font-size:24px;color:#10233f;margin:2px 0}.quadrant small,.quadrant b{display:block;font-size:8px;color:#64748b}.quadrant b{margin-top:7px;color:#334155}.q-red{border-top-color:var(--red)}.q-blue{border-top-color:var(--blue)}.q-green{border-top-color:var(--green)}.q-gray{border-top-color:#64748b}.strategy-details{background:#fff;border:1px solid #dbe3ee;border-radius:14px;overflow:hidden}.strategy-details>summary{cursor:pointer;padding:14px 16px;font-size:11px;font-weight:850;color:#1f6feb;list-style:none}.strategy-details>summary::after{content:'+';float:right;font-size:16px}.strategy-details[open]>summary::after{content:'−'}.details-body{padding:0 14px 14px}.details-body .exec-hero,.details-body .exec-kpis{display:none!important}.details-body .exec-dashboard{gap:10px}.details-body .exec-panel{box-shadow:none}.details-body .exec-grid2{display:none!important}
+@media(max-width:1250px){.strategy-kpis{grid-template-columns:repeat(3,1fr)}}@media(max-width:900px){.strategy-hero{grid-template-columns:1fr}.hero-result{border-left:0;border-top:1px solid rgba(255,255,255,.18);padding:12px 0 0}.strategy-grid.two,.decision-cards,.quadrant-grid{grid-template-columns:1fr 1fr}}@media(max-width:600px){.strategy-kpis,.strategy-grid.two,.decision-cards,.quadrant-grid{grid-template-columns:1fr}.strategy-hero h2{font-size:19px}}
+</style>
+
+<style>
+/* Refinamento solicitado: tabelas estratégicas e ranking horizontal */
+.category-strategy-table{table-layout:fixed}
+.category-strategy-table th:first-child{width:27%}
+.category-strategy-table th:not(:first-child),.category-strategy-table td:not(:first-child){text-align:right!important}
+.details-body .exec-grid3{display:block!important;width:100%!important}
+.details-body .exec-grid3>.exec-panel{width:100%!important;max-width:none!important}
+.details-body .exec-grid3 .table-wrap{width:100%!important;max-width:none!important;overflow-x:visible!important}
+.details-body .exec-grid3 .exec-table{width:100%!important;min-width:0!important;table-layout:fixed!important;font-size:7.5px!important}
+.details-body .exec-grid3 .exec-table th,.details-body .exec-grid3 .exec-table td{padding:6px 3px!important;white-space:normal!important;line-height:1.15!important;word-break:normal!important}
+.details-body .exec-grid3 .exec-table th:first-child,.details-body .exec-grid3 .exec-table td:first-child{width:14%!important;text-align:left!important}
+.details-body .exec-grid3 .exec-table th:not(:first-child),.details-body .exec-grid3 .exec-table td:not(:first-child){text-align:right!important}
+@media(max-width:900px){.details-body .exec-grid3 .exec-table{font-size:7px!important}}
+</style>
+
+<style>
+/* Ordem final e inclusao de preco medio */
+.details-body .dimension-grid>.dimension-card:first-child{display:none!important}
+.final-products-panel,.strategy-dashboard>section:last-child{width:100%!important}
+.final-products-table{width:100%!important;table-layout:fixed!important;font-size:8px!important}
+.final-products-table th,.final-products-table td{padding:7px 4px!important;white-space:normal!important}
+.final-products-table th:first-child,.final-products-table td:first-child{width:22%!important;text-align:left!important}
+.final-products-table th:not(:first-child),.final-products-table td:not(:first-child){text-align:right!important}
+.category-strategy-table th:first-child{width:22%!important}
+@media(max-width:1100px){.final-products-table{font-size:7px!important}}
+</style>
+
+<style>
+/* Nova leitura visual do Top 15 clientes */
+.priority-panel{padding:20px!important}
+.priority-panel .strategy-title{align-items:center;margin-bottom:10px}
+.priority-panel .strategy-title h3{font-size:18px!important;margin-top:4px}
+.priority-panel .strategy-title p{font-size:10px!important;max-width:310px;text-align:right}
+.priority-legend{display:flex;justify-content:flex-end;gap:18px;margin:0 0 10px;font-size:9px;color:#64748b}
+.priority-legend span{display:flex;align-items:center;gap:5px}.legend-dot{width:8px;height:8px;border-radius:50%;display:inline-block}.legend-dot.critical{background:#dc2626}.legend-dot.attention{background:#d97706}.legend-dot.opportunity{background:#2563eb}
+.priority-wrap{overflow:visible!important;border:1px solid #dbe3ee;border-radius:12px}
+.action-table{table-layout:fixed!important;font-size:10px!important;border-collapse:separate!important;border-spacing:0!important}
+.action-table thead th{background:#eaf1fb!important;color:#294462!important;padding:10px 12px!important;font-size:8px!important;letter-spacing:.25px!important;text-align:left!important;border-bottom:1px solid #cbd8e8!important}
+.action-table thead th:nth-child(1){width:4%!important;text-align:center!important}.action-table thead th:nth-child(2){width:30%!important}.action-table thead th:nth-child(3){width:27%!important}.action-table thead th:nth-child(4){width:14%!important;text-align:right!important}.action-table thead th:nth-child(5){width:17%!important;text-align:right!important}.action-table thead th:nth-child(6){width:8%!important;text-align:right!important}
+.action-table tbody td{padding:12px!important;border-bottom:1px solid #e5ebf3!important;vertical-align:middle!important;background:#fff!important}
+.action-table tbody tr:last-child td{border-bottom:0!important}.action-table tbody tr:hover td{background:#f7faff!important}
+.action-table tbody tr.priority-row td:first-child{border-left:4px solid transparent!important}.action-table tbody tr.priority-row.critical td:first-child{border-left-color:#dc2626!important}.action-table tbody tr.priority-row.attention td:first-child{border-left-color:#d97706!important}.action-table tbody tr.priority-row.opportunity td:first-child{border-left-color:#2563eb!important}
+.action-table .rank{display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;border-radius:50%;background:#eaf2ff;color:#1d5fc1;font-size:10px;font-weight:900}
+.action-table .client-cell strong{display:block;font-size:10.5px;line-height:1.25;color:#10233f}.action-table .client-cell small{display:block;margin-top:4px;color:#63758d;font-size:8.5px;text-transform:uppercase}.action-table .client-cell small span{color:#a8b4c4;margin:0 3px}
+.action-table .action-cell{text-align:left!important}.action-table .action-cell small{display:block;margin-top:5px;color:#63758d;font-size:8.5px;line-height:1.25}.action-table .action-status{padding:5px 9px!important;font-size:8.5px!important}
+.action-table .value-cell{text-align:right!important}.action-table .value-cell strong{display:block;font-size:11px;color:#10233f;white-space:nowrap}.action-table .value-cell small{display:block;margin-top:4px;color:#718197;font-size:8.5px;white-space:nowrap}.action-table .variation-cell{text-align:right!important}.action-table .variation-cell strong{font-size:11px}.mobile-label{display:none}
+@media(max-width:900px){.priority-panel{padding:14px!important}.priority-panel .strategy-title{align-items:flex-start}.priority-panel .strategy-title p{text-align:left}.priority-legend{justify-content:flex-start;flex-wrap:wrap}.priority-wrap{border:0}.action-table,.action-table tbody{display:block}.action-table thead{display:none}.action-table tbody{display:grid;gap:10px}.action-table tbody tr.priority-row{display:grid;grid-template-columns:42px 1fr 1fr;border:1px solid #dbe3ee;border-radius:11px;overflow:hidden}.action-table tbody td{display:block;border:0!important;padding:10px!important}.action-table tbody td:first-child{grid-row:1/3}.action-table .client-cell{grid-column:2/4}.action-table .action-cell{grid-column:2/4;border-top:1px solid #edf1f6!important}.action-table .value-cell,.action-table .variation-cell{border-top:1px solid #edf1f6!important;text-align:left!important}.mobile-label{display:block;font-size:7px;text-transform:uppercase;color:#7b8ba1;margin-bottom:3px}.action-table .value-cell small{white-space:normal}}
+</style>
+
+<style>
+/* Tabelas adicionais agora ficam ocultas no bloco operacional */
+.operational-extra-sections{display:flex;flex-direction:column;gap:14px;margin-top:14px}
+.operational-extra-sections .priority-panel,
+.operational-extra-sections .final-products-panel{width:100%!important;margin:0!important}
+</style>
+
+<style>
+/* Categorias unificadas: primeira leitura Meta x Real */
+.category-performance-panel{width:100%!important;padding:18px!important}
+.category-performance-panel .strategy-title{align-items:center;margin-bottom:8px}
+.category-performance-panel .strategy-title h3{font-size:18px!important}
+.category-performance-panel .strategy-title p{font-size:9px;text-align:right;max-width:360px}
+.category-legend{display:flex;justify-content:flex-end;gap:16px;margin:0 0 10px;font-size:8px;color:#64748b}
+.category-legend span{display:flex;align-items:center;gap:5px}
+.category-legend .legend-dot.good{background:#07865b}.category-legend .legend-dot.attention{background:#d97706}.category-legend .legend-dot.bad{background:#dc2626}
+.category-performance-wrap{border:1px solid #dbe3ee;border-radius:11px;overflow:hidden!important}
+.category-performance-table{width:100%!important;table-layout:fixed!important;font-size:9px!important}
+.category-performance-table th{padding:9px 6px!important;white-space:normal!important;line-height:1.15!important}
+.category-performance-table td{padding:9px 6px!important;vertical-align:middle!important}
+.category-performance-table th:first-child,.category-performance-table td:first-child{width:20%!important;text-align:left!important}
+.category-performance-table th:not(:first-child),.category-performance-table td:not(:first-child){text-align:right!important}
+.category-performance-table .category-name-cell strong{display:block;color:#10233f;font-size:9.5px}
+.category-performance-table .category-name-cell small{display:block;color:#718197;font-size:7.5px;margin-top:3px}
+.attainment{display:inline-flex;min-width:48px;justify-content:center;border-radius:999px;padding:4px 7px;font-size:8px;font-weight:900}
+.attainment.good{background:#e7f7ef;color:#06734e}.attainment.attention{background:#fff4df;color:#9b5a00}.attainment.bad{background:#fff0f0;color:#b12f2f}.attainment.neutral{background:#eef2f7;color:#64748b}
+@media(max-width:1050px){.category-performance-wrap{overflow-x:auto!important}.category-performance-table{min-width:980px!important}}
+</style>
+
+<style>
+#btnLimpar:disabled{opacity:.7;cursor:wait;background:#eef2f7;color:#475569}
+</style>
+
+<style>
+/* Meta x Real em formato ultracompacto */
+.category-performance-panel{
+  padding:10px 12px!important;
+  border-radius:10px!important;
+}
+.category-performance-panel .strategy-title{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  margin:0 0 5px!important;
+  min-height:0!important;
+}
+.category-performance-panel .strategy-title .eyebrow{
+  font-size:7px!important;
+  line-height:1!important;
+  letter-spacing:.55px!important;
+}
+.category-performance-panel .strategy-title h3{
+  display:inline-block!important;
+  font-size:13px!important;
+  line-height:1!important;
+  margin:0 0 0 7px!important;
+}
+.category-performance-panel .strategy-title>div{
+  display:flex!important;
+  align-items:center!important;
+  gap:0!important;
+}
+.category-performance-panel .strategy-title p{
+  font-size:7px!important;
+  line-height:1.1!important;
+  margin:0!important;
+  max-width:none!important;
+  white-space:nowrap!important;
+}
+.category-legend{
+  display:flex!important;
+  justify-content:flex-end!important;
+  gap:10px!important;
+  margin:-1px 0 4px!important;
+  font-size:6.5px!important;
+  line-height:1!important;
+}
+.category-legend span{gap:3px!important}
+.category-legend .legend-dot{
+  width:6px!important;
+  height:6px!important;
+}
+.category-performance-wrap{
+  border-radius:7px!important;
+}
+.category-performance-table{
+  font-size:7px!important;
+  line-height:1.05!important;
+}
+.category-performance-table th{
+  padding:5px 4px!important;
+  font-size:6.4px!important;
+  line-height:1!important;
+  height:20px!important;
+}
+.category-performance-table td{
+  padding:4px!important;
+  height:24px!important;
+  line-height:1.05!important;
+}
+.category-performance-table th:first-child,
+.category-performance-table td:first-child{
+  width:22%!important;
+}
+.category-performance-table .category-name-cell strong{
+  font-size:7.5px!important;
+  line-height:1!important;
+}
+.category-performance-table .category-name-cell small{
+  font-size:5.8px!important;
+  line-height:1!important;
+  margin-top:2px!important;
+  white-space:nowrap!important;
+}
+.category-performance-table td strong{
+  font-size:7.2px!important;
+  line-height:1!important;
+}
+.category-performance-table .attainment{
+  min-width:38px!important;
+  padding:2px 5px!important;
+  font-size:6.5px!important;
+  line-height:1!important;
+}
+.category-performance-table tbody tr:hover{
+  background:#f5f9ff!important;
+}
+@media(max-width:1050px){
+  .category-performance-panel .strategy-title p{display:none!important}
+  .category-performance-table{min-width:900px!important}
+}
+</style>
+
+<style>
+/* Meta x Real: compacta, mas com leitura confortavel */
+.category-performance-panel{
+  padding:13px 14px!important;
+}
+.category-performance-panel .strategy-title{
+  margin-bottom:7px!important;
+}
+.category-performance-panel .strategy-title .eyebrow{
+  font-size:8px!important;
+}
+.category-performance-panel .strategy-title h3{
+  font-size:15px!important;
+  margin-left:8px!important;
+}
+.category-performance-panel .strategy-title p{
+  font-size:8px!important;
+}
+.category-legend{
+  gap:12px!important;
+  margin:0 0 6px!important;
+  font-size:7.5px!important;
+}
+.category-legend .legend-dot{
+  width:7px!important;
+  height:7px!important;
+}
+.category-performance-wrap{
+  width:100%!important;
+  max-width:1180px!important;
+  margin:0 auto!important;
+  overflow:hidden!important;
+}
+.category-performance-table{
+  width:100%!important;
+  min-width:0!important;
+  table-layout:auto!important;
+  font-size:8.5px!important;
+  line-height:1.15!important;
+}
+.category-performance-table th{
+  padding:7px 6px!important;
+  height:auto!important;
+  font-size:7.2px!important;
+  line-height:1.1!important;
+  white-space:nowrap!important;
+}
+.category-performance-table td{
+  padding:6px!important;
+  height:29px!important;
+  line-height:1.15!important;
+  white-space:nowrap!important;
+}
+.category-performance-table th:first-child,
+.category-performance-table td:first-child{
+  width:18%!important;
+  min-width:150px!important;
+}
+.category-performance-table .category-name-cell strong{
+  font-size:9px!important;
+  line-height:1.1!important;
+}
+.category-performance-table .category-name-cell small{
+  font-size:6.8px!important;
+  line-height:1.1!important;
+  margin-top:2px!important;
+}
+.category-performance-table td strong{
+  font-size:8.7px!important;
+}
+.category-performance-table .attainment{
+  min-width:43px!important;
+  padding:3px 6px!important;
+  font-size:7.5px!important;
+}
+@media(max-width:1200px){
+  .category-performance-wrap{max-width:100%!important;overflow-x:auto!important}
+  .category-performance-table{min-width:1040px!important}
+}
+</style>
+
+<style>
+/* Meta x Real: remove margens brancas laterais e aproveita o card inteiro */
+.category-performance-wrap{
+  width:100%!important;
+  max-width:none!important;
+  margin:0!important;
+}
+.category-performance-table{
+  width:100%!important;
+  min-width:0!important;
+  table-layout:fixed!important;
+}
+.category-performance-table th:nth-child(1),
+.category-performance-table td:nth-child(1){width:19%!important;min-width:0!important}
+.category-performance-table th:nth-child(2),
+.category-performance-table td:nth-child(2){width:10.5%!important}
+.category-performance-table th:nth-child(3),
+.category-performance-table td:nth-child(3){width:10.5%!important}
+.category-performance-table th:nth-child(4),
+.category-performance-table td:nth-child(4){width:9%!important}
+.category-performance-table th:nth-child(5),
+.category-performance-table td:nth-child(5){width:12%!important}
+.category-performance-table th:nth-child(6),
+.category-performance-table td:nth-child(6){width:12%!important}
+.category-performance-table th:nth-child(7),
+.category-performance-table td:nth-child(7){width:9%!important}
+.category-performance-table th:nth-child(8),
+.category-performance-table td:nth-child(8){width:10%!important}
+.category-performance-table th:nth-child(9),
+.category-performance-table td:nth-child(9){width:8%!important}
+@media(max-width:1200px){
+  .category-performance-wrap{max-width:none!important;overflow-x:auto!important}
+  .category-performance-table{min-width:1040px!important}
+}
+</style>
+
+<style>
+/* Prioridade de execucao: cliente + historico mensal expansivel */
+.priority-panel .priority-legend{display:none!important}
+.priority-client-table{width:100%!important;table-layout:fixed!important;font-size:9px!important}
+.priority-client-table thead th:nth-child(1){width:5%!important;text-align:center!important}
+.priority-client-table thead th:nth-child(2){width:72%!important;text-align:left!important}
+.priority-client-table thead th:nth-child(3){width:23%!important;text-align:right!important}
+.priority-client-table tbody .priority-client-row td{padding:10px 12px!important;background:#fff!important;border-bottom:1px solid #e5ebf3!important;vertical-align:middle!important}
+.priority-client-table tbody .priority-client-row:hover td{background:#f7faff!important}
+.priority-client-table .client-cell strong{font-size:10px!important}
+.priority-client-table .client-cell small{font-size:8px!important}
+.priority-client-table .expand-cell{text-align:right!important}
+.priority-expand-btn{display:inline-flex;align-items:center;justify-content:space-between;gap:10px;min-width:145px;height:28px;padding:0 9px;border:1px solid #b9d3fb;border-radius:7px;background:#eef5ff;color:#1761c2;font-size:8px;font-weight:850;cursor:pointer}
+.priority-expand-btn:hover{background:#dfeeff;border-color:#88b7f5}.priority-expand-btn b{font-size:14px;line-height:1}
+.priority-history-row{display:none}.priority-history-row.open{display:table-row}
+.priority-history-row>td{padding:0!important;background:#f8fbff!important;border-bottom:1px solid #dbe3ee!important}
+.priority-history-box{padding:12px 14px 14px;border-left:4px solid #2f75d6}
+.priority-history-title{font-size:11px;font-weight:900;color:#10233f;margin:0 0 8px}
+.priority-history-table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #cbd8e8;border-radius:8px;overflow:hidden;font-size:8px}
+.priority-history-table th{padding:7px 9px;background:#dceafd;color:#173b67;text-align:left;font-size:7.5px;text-transform:none}
+.priority-history-table th:not(:first-child),.priority-history-table td:not(:first-child){text-align:right}
+.priority-history-table td{padding:7px 9px;border-bottom:1px solid #e1e8f0;background:#fff}
+.priority-history-table .cat-toggle{height:23px;padding:0 8px;font-size:7px}
+.priority-history-table .month-cat-row{display:none}.priority-history-table .month-cat-row.open{display:table-row}
+.priority-history-table .month-cat-row td{padding:0!important;text-align:left!important;background:#f8fafc!important}
+.priority-history-table .month-cat-box{padding:9px}
+@media(max-width:700px){.priority-client-table thead th:nth-child(2){width:60%!important}.priority-client-table thead th:nth-child(3){width:35%!important}.priority-expand-btn{min-width:110px}.priority-panel .strategy-title p{display:none}}
+</style>
+
+<style>
+/* Prioridade de execucao em formato accordion limpo */
+.priority-panel{padding:16px!important}
+.priority-panel .strategy-title{margin-bottom:10px!important}
+.priority-wrap{border:0!important;overflow:visible!important}
+.priority-client-list{display:flex;flex-direction:column;gap:7px;width:100%}
+.priority-client-card{border:1px solid #d8e2ef;border-radius:9px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.03)}
+.priority-client-card.open{border-color:#9fc3f5;box-shadow:0 3px 10px rgba(37,99,235,.08)}
+.priority-client-header{display:grid;grid-template-columns:30px minmax(0,1fr) auto 20px;align-items:center;gap:10px;width:100%;min-height:48px;padding:8px 12px;border:0;background:#fff;text-align:left;cursor:pointer;color:#10233f}
+.priority-client-header:hover{background:#f7faff}.priority-client-card.open .priority-client-header{background:#edf5ff;border-bottom:1px solid #c9dcf4}
+.priority-rank{display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;border-radius:50%;background:#e8f1ff;color:#1d5fc1;font-size:9px;font-weight:900}
+.priority-client-info{min-width:0}.priority-client-info strong{display:block;font-size:9.5px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.priority-client-info small{display:block;margin-top:3px;font-size:7.5px;color:#64748b;text-transform:uppercase}.priority-client-info i{font-style:normal;color:#a4b0c0;margin:0 4px}
+.priority-open-label{font-size:8px;font-weight:850;color:#2563eb}.priority-arrow{font-size:15px;color:#2563eb;text-align:center;line-height:1}
+.priority-history-row{display:none}.priority-history-row.open{display:block}.priority-history-box{padding:10px 12px 12px;background:#f8fbff;border:0!important}
+.priority-history-heading{display:flex;align-items:center;justify-content:space-between;margin:0 0 7px}.priority-history-heading strong{font-size:10px;color:#10233f}.priority-history-heading span{font-size:7.5px;color:#64748b}
+.priority-history-table{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;border:1px solid #cbd8e8;border-radius:7px;overflow:hidden;background:#fff;font-size:8px}
+.priority-history-table th{padding:6px 8px!important;background:#e5effc!important;color:#294462!important;font-size:7px!important;text-transform:uppercase!important;letter-spacing:.2px;text-align:left!important}
+.priority-history-table th:nth-child(1){width:14%}.priority-history-table th:nth-child(2){width:35%;text-align:right!important}.priority-history-table th:nth-child(3){width:30%;text-align:right!important}.priority-history-table th:nth-child(4){width:21%;text-align:right!important}
+.priority-history-table td{height:30px;padding:5px 8px!important;border-bottom:1px solid #e5ebf3!important;background:#fff!important;font-size:8px!important}
+.priority-history-table tr:last-child td{border-bottom:0!important}.priority-history-table td:first-child{text-align:left!important}.priority-history-table td:not(:first-child){text-align:right!important}
+.priority-history-table .cat-toggle{height:22px!important;padding:0 8px!important;border-radius:6px!important;font-size:7px!important;white-space:nowrap}
+.priority-history-table .month-cat-row{display:none}.priority-history-table .month-cat-row.open{display:table-row}.priority-history-table .month-cat-row td{padding:0!important;background:#f8fafc!important;text-align:left!important}.priority-history-table .month-cat-box{padding:8px!important}.priority-history-table .month-cat-title{font-size:8px!important;margin-bottom:6px!important}
+.priority-history-table .month-cat-table{font-size:7px!important}.priority-history-table .month-cat-table th,.priority-history-table .month-cat-table td{padding:4px 6px!important;height:22px!important}
+.priority-empty{padding:20px;text-align:center;color:#64748b;border:1px dashed #cbd5e1;border-radius:8px}
+@media(max-width:700px){.priority-client-header{grid-template-columns:28px minmax(0,1fr) 18px}.priority-open-label{display:none}.priority-history-heading span{display:none}.priority-history-table{min-width:620px}.priority-history-box>.table-wrap{overflow-x:auto!important}}
+</style>
+
+<style>
+/* Comparativos mensais de meta, real e preco medio */
+.priority-history-scroll{overflow-x:auto!important}
+.comparison-history-table{min-width:1050px!important;table-layout:fixed!important}
+.comparison-history-table .history-group-head th{background:#cfe1f8!important;color:#173b67!important;border-bottom:1px solid #aac7eb!important;text-align:center!important;font-size:7.5px!important}
+.comparison-history-table thead tr:nth-child(2) th{background:#eaf2fc!important;text-align:right!important}
+.comparison-history-table thead tr:nth-child(2) th:nth-child(1),
+.comparison-history-table thead tr:nth-child(2) th:nth-child(4),
+.comparison-history-table thead tr:nth-child(2) th:nth-child(7){text-align:right!important}
+.comparison-history-table th:nth-child(1){width:7%!important;text-align:left!important}
+.comparison-history-table th:nth-child(2),.comparison-history-table th:nth-child(3),.comparison-history-table th:nth-child(4){width:8%!important}
+.comparison-history-table th:nth-child(5),.comparison-history-table th:nth-child(6){width:12%!important}
+.comparison-history-table th:nth-child(7){width:8%!important}
+.comparison-history-table th:nth-child(8),.comparison-history-table th:nth-child(9),.comparison-history-table th:nth-child(10){width:8%!important}
+.comparison-history-table th:nth-child(11){width:9%!important}
+.comparison-history-table td{font-size:7.5px!important;padding:6px!important;white-space:nowrap!important}
+.history-pct{display:inline-flex;min-width:39px;justify-content:center;padding:2px 5px;border-radius:999px;font-size:6.8px;font-weight:900}
+.history-pct.good{background:#e7f7ef;color:#06734e}.history-pct.attention{background:#fff4df;color:#9b5a00}.history-pct.bad{background:#fff0f0;color:#b12f2f}.history-pct.neutral{background:#eef2f7;color:#64748b}
+</style>
+
+<style>
+/* Categorias mensais com os mesmos comparativos de Meta x Real */
+.category-comparison-scroll{width:100%;overflow-x:auto}
+.category-comparison-table{width:100%!important;min-width:960px!important;table-layout:fixed!important;border-collapse:separate!important;border-spacing:0!important}
+.category-comparison-table .category-group-head th{background:#cfe1f8!important;color:#173b67!important;text-align:center!important;border-bottom:1px solid #aac7eb!important;font-size:7px!important}
+.category-comparison-table thead tr:nth-child(2) th{background:#eaf2fc!important;color:#294462!important;text-align:right!important;font-size:6.8px!important}
+.category-comparison-table th:first-child,.category-comparison-table td:first-child{width:18%!important;text-align:left!important}
+.category-comparison-table th:not(:first-child),.category-comparison-table td:not(:first-child){text-align:right!important}
+.category-comparison-table th,.category-comparison-table td{padding:5px 6px!important;height:25px!important;white-space:nowrap!important;font-size:7px!important}
+.category-comparison-table td strong{font-size:7.2px!important}
+.category-comparison-table .history-pct{font-size:6.5px!important;min-width:37px!important;padding:2px 4px!important}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="header-container"><h1>OPORTUNIDADES POR CLIENTE</h1><button class="nav-toggle" id="navToggle">☰</button><nav class="navbar" id="navbar"><a href="index.html">PAINEL DE VENDAS</a><a href="carteira.html">CARTEIRA</a><a href="rvv.html">RVV</a><a href="campanha.html">CAMPANHA DE VENDAS</a><a href="estoque.html">ESTOQUE</a><a class="active" href="oportunidades.html">OPORTUNIDADES</a><a href="investimentos.html">INVESTIMENTOS</a><a href="forecast.html">FORECAST</a></nav></div></header>
+<div class="wrap">
+  <section class="panel filters-box collapsed" id="filtrosBox">
+    <div class="filters-head"><div><div class="t">Filtros da análise <span class="filter-count" id="filterCount">0</span></div><div class="sub">Use apenas quando precisar abrir um recorte por equipe, cliente, categoria ou período.</div></div><div class="filters-actions-top"><div class="filter-drawer-label link" id="btnToggleFiltros">Mais filtros</div></div></div>
+    <div class="filters-grid" id="filtros">
+      <label class="span-2">Gerente<select id="f_ger" multiple size="4"></select></label>
+      <label class="span-2">Coordenação<select id="f_coord" multiple size="4"></select></label>
+      <label class="span-2">Vendedor<select id="f_vend" multiple size="4"></select></label>
+      <label class="span-2">Categoria<select id="f_cat" multiple size="4"></select></label>
+      <label class="span-2">Mês Análise<div class="month-filter-stack"><select id="f_mes_ref" multiple size="6"></select><div class="month-help">Selecione períodos específicos, ex.: Jan/25, Jan/26 • opção “Todos os meses” disponível</div></div></label>
+      <label class="span-4">Cliente / Código<input id="f_cli_search" class="client-search" type="search" placeholder="Digite o nome do cliente..." autocomplete="off"><select id="f_cli" multiple size="4"></select></label>
+      <label class="span-2">UF<select id="f_uf" multiple size="4"></select></label>
+      <label class="span-2">Segmento<select id="f_seg" multiple size="4"></select></label>
+      <label class="span-2">Tipo de oportunidade<select id="f_opp" multiple size="4"><option value="">Todos (todos)</option><option>QUEDA DE VOLUME</option><option>CLIENTE SEM COMPRA</option><option>QUEDA DE FATURAMENTO</option><option>RECUPERAÇÃO DE CLIENTE</option><option>OPORTUNIDADE DE CROSS-SELL</option><option>AUMENTO DE TICKET</option><option>AUMENTO DE PREÇO/MARGEM</option></select></label>
+    </div>
+    <div class="filters-actions"><button class="btn" id="btnLimpar">Limpar</button><button class="btn primary" id="btnReload">Recarregar</button></div>
+  </section>
+  <div class="page-intro"><h2>Leitura comercial: o que mudou e onde agir</h2><p>Comece pelo comparativo, confirme os clientes perdidos e termine nas categorias que sustentam ou limitam o resultado.</p><div class="executive-meta" id="executiveMeta"></div></div>
+  <section class="panel" id="contentPanel"><div id="contentArea"></div></section>
+</div>
+<script>
+const PFV_FILTERS_KEY='pfv_filters_v9';
+function pfvGetFilters(){ try { return JSON.parse(localStorage.getItem(PFV_FILTERS_KEY)||'{}'); } catch(e){ return {}; } }
+function pfvSetFilters(patch){ const cur=pfvGetFilters(); const next={...cur,...patch}; try { localStorage.setItem(PFV_FILTERS_KEY, JSON.stringify(next)); } catch(e){} return next; }
+function pfvBindFilterSync(ids){
+  const els=ids.map(id=>document.getElementById(id)).filter(Boolean);
+  function applyFromStorage(){
+    const saved=pfvGetFilters();
+    els.forEach(el=>{
+      const v=saved[el.id]; if(v==null) return;
+      if(el.multiple && Array.isArray(v)) Array.from(el.options).forEach(o=>o.selected=v.includes(o.value));
+      else if(typeof v==='string') el.value=v;
+    });
+  }
+  function saveToStorage(){
+    const patch={};
+    els.forEach(el=>patch[el.id]=el.multiple?Array.from(el.selectedOptions).map(o=>o.value):(el.value||''));
+    pfvSetFilters(patch);
+  }
+  els.forEach(el=>{ el.addEventListener('change', saveToStorage); el.addEventListener('input', saveToStorage); });
+  return {applyFromStorage, saveToStorage};
+}
+const MONTH_MAP={'JANEIRO':1,'FEVEREIRO':2,'MARÇO':3,'MARCO':3,'ABRIL':4,'MAIO':5,'JUNHO':6,'JULHO':7,'AGOSTO':8,'SETEMBRO':9,'OUTUBRO':10,'NOVEMBRO':11,'DEZEMBRO':12};
+const MONTH_SHORT={1:'Jan',2:'Fev',3:'Mar',4:'Abr',5:'Mai',6:'Jun',7:'Jul',8:'Ago',9:'Set',10:'Out',11:'Nov',12:'Dez'};
+const STATE={ raw:[], sync:null, charts:{}, availablePeriods:[], maxYear:null };
+const $=s=>document.querySelector(s);
+const debounce=(fn,wait=120)=>{ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), wait); }; };
+const num=v=>{ const n=Number(v||0); return Number.isFinite(n)?n:0; };
+const fmtInt=v=>Math.round(Number(v||0)).toLocaleString('pt-BR');
+const fmtMon=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const esc=(s='')=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const cmpStr=(a,b)=>String(a||'').localeCompare(String(b||''),'pt-BR');
+const getYM=r=>{ const y=Number(r.ANO||r.Ano||0); const mName=String(r['MÊS']||r.Mês||r.MES||r.Mes||'').toUpperCase().trim(); const m=MONTH_MAP[mName]; return (y&&m)? y*100+m : null; };
+const getYear=r=>Math.floor((getYM(r)||0)/100) || 0;
+const getMonthNum=r=>{ const ym=getYM(r); return ym?ym%100:0; };
+const ymLabel=ym=>{ const y=Math.floor(ym/100), m=ym%100; const yy=String(y).slice(-2); return `${MONTH_SHORT[m]||m}/${yy}`; };
+const monthLabelByNum=n=>MONTH_SHORT[n]||String(n);
+function uniqSorted(values){ return [...new Set(values.filter(v=>v!=null && String(v).trim()!==''))].sort(cmpStr); }
+function fillSelect(id, values, first='Todos'){ const s=document.getElementById(id); if(!s) return; s.innerHTML=`<option value="">${first} (todas)</option>`; uniqSorted(values).forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; s.appendChild(o); }); s.options[0].selected=true; }
+function fillClientSelect(){ const s=document.getElementById('f_cli'); if(!s) return; const map=new Map(); STATE.raw.forEach(r=>{ const cliente=String(r.CLIENTE||r.Cliente||'').trim(); const code=String(r.CLIFOR||r.Clifor||'').trim(); if(cliente||code) map.set(`${code}||${cliente}`,{code,cliente}); }); s.innerHTML='<option value="">Todos (todos os clientes)</option>'; [...map.values()].sort((a,b)=>cmpStr(a.cliente,b.cliente)).forEach(c=>{ const o=document.createElement('option'); o.value=`${c.code}||${c.cliente}`; o.textContent=`${c.code||'—'} • ${c.cliente||'Sem nome'}`; s.appendChild(o); }); s.options[0].selected=true; }
+function fillPeriodMulti(periods){ const s=document.getElementById('f_mes_ref'); if(!s) return; const opts=['<option value="__ALL__">Todos os meses</option>']; periods.forEach(ym=>opts.push(`<option value="${ym}">${ymLabel(ym)}</option>`)); s.innerHTML=opts.join(''); Array.from(s.options).forEach(o=>o.selected=o.value==='__ALL__'); }
+function getPeriodSelection(){ const s=document.getElementById('f_mes_ref'); const vals=Array.from(s?.selectedOptions||[]).map(o=>o.value); const filtered = vals.length>0 && !vals.includes('__ALL__'); const periods = filtered ? vals.map(v=>Number(v)).filter(Boolean).sort((a,b)=>a-b) : STATE.availablePeriods.slice(); return {filtered, periods}; }
+function selectedValues(id){ const el=document.getElementById(id); if(!el) return []; return Array.from(el.selectedOptions).map(o=>o.value).filter(v=>v && v!=='__ALL__'); }
+function activeFilters(){ const periodSel=getPeriodSelection(); return { ger:selectedValues('f_ger'), coord:selectedValues('f_coord'), vend:selectedValues('f_vend'), cat:selectedValues('f_cat'), cli:selectedValues('f_cli'), cliSearch:String(document.getElementById('f_cli_search')?.value||'').trim().toLocaleLowerCase('pt-BR'), uf:selectedValues('f_uf'), seg:selectedValues('f_seg'), periods:periodSel.periods, periodFiltered:periodSel.filtered }; }
+function baseFilteredRows(){ const f=activeFilters(); return STATE.raw.filter(r=>{ const cliente=String(r.CLIENTE||r.Cliente||'').trim(); const clifor=String(r.CLIFOR||r.Clifor||'').trim(); const clientKey=`${clifor}||${cliente}`; if(f.ger.length && !f.ger.includes(String(r.GERENTE||r.Gerente||'').trim())) return false; if(f.coord.length && !f.coord.includes(String(r.COORDENADOR||r.Coordenador||'').trim())) return false; if(f.vend.length && !f.vend.includes(String(r.VENDEDOR||r.Vendedor||'').trim())) return false; if(f.cat.length && !f.cat.includes(String(r.CATEGORIA||r.Categoria||'').trim())) return false; if(f.uf.length && !f.uf.includes(String(r.UF||r.Uf||'').trim())) return false; if(f.seg.length && !f.seg.includes(String(r.SEGMENTO||r.Segmento||'').trim())) return false; if(f.cli.length && !f.cli.includes(clientKey)) return false; if(f.cliSearch && !`${cliente} ${clifor}`.toLocaleLowerCase('pt-BR').includes(f.cliSearch)) return false; return true; }); }
+function getOrCreate(map,key,factory){ if(!map.has(key)) map.set(key, factory()); return map.get(key); }
+function pctGrowth(current, previous){ return previous>0?((current-previous)/previous)*100:null; }
+function statusFromPct(pct){ return pct==null?'sem_meta':pct<80?'critical':pct<100?'attention':'stable'; }
+function statusLabel(status){ return status==='critical'?'Crítico':status==='attention'?'Atenção':status==='stable'?'Atingiu meta':'Sem meta'; }
+function growthClass(p){ return p==null?'grow-neutral':p>0?'grow-pos':p<0?'grow-neg':'grow-neutral'; }
+function fmtPct(p, signed=false){ if(p==null) return '—'; const s=p>0 && signed?'+':''; return `${s}${p.toFixed(1)}%`; }
+function buildAnalysisModel(rows){
+  const filters=activeFilters();
+  const selectedPeriodsArr = filters.periods.length ? filters.periods.slice() : STATE.availablePeriods.slice();
+  const periodSet = new Set(selectedPeriodsArr);
+  const selectedYears = [...new Set(selectedPeriodsArr.map(ym=>Math.floor(ym/100)))].sort((a,b)=>a-b);
+  const currentYear = selectedYears.length ? selectedYears[selectedYears.length-1] : (STATE.maxYear||0);
+  const previousYear = currentYear ? currentYear-1 : 0;
+  const currentPeriods = selectedPeriodsArr.filter(ym=>Math.floor(ym/100)===currentYear);
+  const previousPeriods = selectedPeriodsArr.filter(ym=>Math.floor(ym/100)===previousYear);
+  const currentPeriodSet = new Set(currentPeriods);
+  const previousPeriodSet = new Set(previousPeriods);
+  const selectedMonthsNums = [...new Set(selectedPeriodsArr.map(ym=>ym%100).filter(Boolean))].sort((a,b)=>a-b);
+  const periodRows = rows.filter(r=>periodSet.has(getYM(r)||0));
+  const currentByMonth = selectedMonthsNums.map(m=>periodRows.filter(r=>getYear(r)===currentYear && getMonthNum(r)===m).reduce((s,r)=>s+num(r.VOLUME||r.Volume||0),0));
+  const previousByMonth = selectedMonthsNums.map(m=>periodRows.filter(r=>getYear(r)===previousYear && getMonthNum(r)===m).reduce((s,r)=>s+num(r.VOLUME||r.Volume||0),0));
+  const categoryMap=new Map(), clientMap=new Map(), currentClientSet=new Set(), previousClientSet=new Set(), matchedClientMap=new Map();
+  periodRows.forEach(r=>{ const ym=getYM(r); const cliente=String(r.CLIENTE||r.Cliente||'').trim()||'Sem nome'; const code=String(r.CLIFOR||r.Clifor||'').trim()||'—'; const cat=String(r.CATEGORIA||r.Categoria||'').trim()||'Sem categoria'; const vol=num(r.VOLUME||r.Volume||0); const fat=num(r.FATURAMENTO||r.Faturamento||0); const metaVol=num(r['VOL. META']||r['Vol. Meta']||r['VOL META']||0); const clientKey=`${code}||${cliente}`; matchedClientMap.set(clientKey,{code,cliente}); const c=getOrCreate(categoryMap, cat, ()=>({cat, metaPrev:0, metaCurrent:0, volPrev:0, volCurrent:0, fatPrev:0, fatCurrent:0})); const cli=getOrCreate(clientMap, clientKey, ()=>({code,cliente, metaPrev:0, metaCurrent:0, volPrev:0, volCurrent:0, fatPrev:0, fatCurrent:0})); if(currentPeriodSet.has(ym)){ c.metaCurrent += metaVol; c.volCurrent += vol; c.fatCurrent += fat; cli.metaCurrent += metaVol; cli.volCurrent += vol; cli.fatCurrent += fat; if(vol>0 || metaVol>0 || fat>0) currentClientSet.add(clientKey); } if(previousPeriodSet.has(ym)){ c.metaPrev += metaVol; c.volPrev += vol; c.fatPrev += fat; cli.metaPrev += metaVol; cli.volPrev += vol; cli.fatPrev += fat; if(vol>0 || metaVol>0 || fat>0) previousClientSet.add(clientKey); } });
+  const categories=[...categoryMap.values()].map(c=>({ ...c, metaGrowthPct:pctGrowth(c.metaCurrent,c.metaPrev), volGrowthPct:pctGrowth(c.volCurrent,c.volPrev), currentMetaPct:c.metaCurrent>0?(c.volCurrent/c.metaCurrent)*100:null, prevMetaPct:c.metaPrev>0?(c.volPrev/c.metaPrev)*100:null, status:statusFromPct(c.metaCurrent>0?(c.volCurrent/c.metaCurrent)*100:null) })).sort((a,b)=>b.volCurrent-a.volCurrent || cmpStr(a.cat,b.cat));
+  const clients=[...clientMap.values()].map(c=>({ ...c, attainmentPctCurrent:c.metaCurrent>0?(c.volCurrent/c.metaCurrent)*100:null, attainmentPctPrev:c.metaPrev>0?(c.volPrev/c.metaPrev)*100:null, volGrowthPct:pctGrowth(c.volCurrent,c.volPrev), metaGrowthPct:pctGrowth(c.metaCurrent,c.metaPrev), status:statusFromPct(c.metaCurrent>0?(c.volCurrent/c.metaCurrent)*100:null) })).sort((a,b)=>b.volCurrent-a.volCurrent || cmpStr(a.cliente,b.cliente));
+  const totals=categories.reduce((acc,c)=>{ acc.metaPrev+=c.metaPrev; acc.metaCurrent+=c.metaCurrent; acc.volPrev+=c.volPrev; acc.volCurrent+=c.volCurrent; acc.fatPrev+=c.fatPrev; acc.fatCurrent+=c.fatCurrent; return acc; }, {metaPrev:0, metaCurrent:0, volPrev:0, volCurrent:0, fatPrev:0, fatCurrent:0});
+  totals.fatGrowthPct=pctGrowth(totals.fatCurrent,totals.fatPrev); totals.volGrowthPct=pctGrowth(totals.volCurrent,totals.volPrev); totals.priceAvgCurrent=totals.volCurrent>0?(totals.fatCurrent/totals.volCurrent):0; totals.priceAvgPrev=totals.volPrev>0?(totals.fatPrev/totals.volPrev):0; totals.currentMetaPct=totals.metaCurrent>0?(totals.volCurrent/totals.metaCurrent)*100:null; totals.currentClientsCount=currentClientSet.size; totals.previousClientsCount=previousClientSet.size;
+  const currentShare=categories.filter(c=>c.volCurrent>0).map(c=>({cat:c.cat,value:c.volCurrent})); const previousShare=categories.filter(c=>c.volPrev>0).map(c=>({cat:c.cat,value:c.volPrev})); const losingCategories=categories.filter(c=>c.volPrev>0 && c.volCurrent<c.volPrev).sort((a,b)=>(a.volGrowthPct||0)-(b.volGrowthPct||0)); const matchedClients=[...matchedClientMap.values()].sort((a,b)=>cmpStr(a.cliente,b.cliente));
+  const selectedPeriodsLabel = filters.periodFiltered ? selectedPeriodsArr.map(ymLabel).join(', ') : 'SEM FILTROS';
+  const currentPeriodsLabel = filters.periodFiltered ? (currentPeriods.map(ymLabel).join(', ') || 'Sem períodos') : String(currentYear);
+  const previousPeriodsLabel = filters.periodFiltered ? (previousPeriods.map(ymLabel).join(', ') || 'Sem períodos') : String(previousYear);
+  return { currentYear, previousYear, selectedMonthsNums, currentPeriodsLabel, previousPeriodsLabel, selectedPeriodsLabel, currentByMonth, previousByMonth, categories, clients, totals, matchedClients, losingCategories, currentShare, previousShare };
+}
+function renderClientBanner(model){ return ''; }
+function cardCompareLines(lines){ return `<div class="card-compare">${lines.map(l=>`<div class="line">${l}</div>`).join('')}</div>`; }
+function renderAnaliseCliente(model){ if(!model.categories.length && !model.clients.length) return '<div class="empty-state">Nenhum dado encontrado para os filtros aplicados.</div>'; const t=model.totals; const html=`<div class="analise-container">${renderClientBanner(model)}<div class="overview-grid four"><div class="overview-card"><div class="icon">👥</div><div class="k">Clientes encontrados</div><div class="v">${fmtInt(t.currentClientsCount)}</div><div class="s">período atual</div>${cardCompareLines([`<strong>Período anterior</strong>: ${fmtInt(t.previousClientsCount)} clientes`,`<strong>Período atual</strong>: ${fmtInt(t.currentClientsCount)} clientes`])}</div><div class="overview-card"><div class="icon">💰</div><div class="k">Faturamento</div><div class="v">${fmtMon(t.fatCurrent)}</div><div class="s">período atual</div>${cardCompareLines([`<strong>Período anterior</strong>: ${fmtMon(t.fatPrev)}`,`Crescimento: <span class="${growthClass(t.fatGrowthPct)}">${fmtPct(t.fatGrowthPct,true)}</span>`])}</div><div class="overview-card"><div class="icon">📈</div><div class="k">Crescimento vs ano anterior</div><div class="v">${fmtPct(t.volGrowthPct, true)}</div><div class="s">volume ${esc(model.currentPeriodsLabel)} x ${esc(model.previousPeriodsLabel)}</div>${cardCompareLines([`<strong>Período atual</strong>: ${fmtInt(t.volCurrent)} kg`,`<strong>Período anterior</strong>: ${fmtInt(t.volPrev)} kg`])}</div><div class="overview-card"><div class="icon">🏷️</div><div class="k">Preço médio</div><div class="v">${fmtMon(t.priceAvgCurrent)}</div><div class="s">período atual</div>${cardCompareLines([`<strong>Período anterior</strong>: ${fmtMon(t.priceAvgPrev)}`,`Meta atual: ${t.currentMetaPct==null?'—':t.currentMetaPct.toFixed(0)+'%'}`])}</div></div>${renderDiagnostic(model)}<div class="chart-section"><div class="chart-header"><div class="title">📊 Evolução do Volume por Mês</div><div class="compare-note">Ano atual x ano anterior</div></div><div class="chart-wrapper"><canvas id="chartEvolucao"></canvas></div></div><div class="secondary-charts"><div class="chart-section"><div class="chart-header"><div class="title">🥧 Participação por Categoria</div><div class="compare-note">Um gráfico para cada período/ano selecionado</div></div><div class="dual-donut-grid"><div class="mini-donut-card"><div class="mini-donut-title">${esc(model.previousPeriodsLabel)}</div><div class="mini-donut-body"><div class="mini-donut-canvas"><canvas id="chartParticipacaoPrev"></canvas></div><div class="mini-donut-legend" id="legendParticipacaoPrev"></div></div></div><div class="mini-donut-card"><div class="mini-donut-title">${esc(model.currentPeriodsLabel)}</div><div class="mini-donut-body"><div class="mini-donut-canvas"><canvas id="chartParticipacaoCurrent"></canvas></div><div class="mini-donut-legend" id="legendParticipacaoCurrent"></div></div></div></div></div><div class="chart-section"><div class="chart-header"><div class="title">Oportunidades Comerciais</div></div><div class="insights-section" id="insightsContainer"></div></div></div><div class="chart-section"><div class="chart-header"><div class="title">📋 Detalhamento por Categoria</div><div class="compare-note">Explore, pesquise ou exporte os dados para aprofundar a análise.</div></div><div class="detail-toolbar"><input id="performanceSearch" type="search" placeholder="Pesquisar categoria..." /><button class="btn" id="exportPerformance">Exportar CSV</button></div><table class="performance-table"><thead><tr><th class="sortable" data-sort="0">Categoria</th><th class="num-cell">Meta Ano Anterior</th><th class="num-cell">Meta Atual</th><th class="num-cell">% de Cresci.</th><th class="num-cell">Volume Ano Anterior</th><th class="num-cell">Volume Atual</th><th class="num-cell">% de Cresci.</th><th class="status-cell">Status</th></tr></thead><tbody id="performanceTableBody"></tbody></table></div></div>`; setTimeout(()=>{renderAnaliseCharts(model); bindDetailTools();}, 60); return html; }
+function renderDonut(canvasId, legendId, dataList, emptyLabel){ const colors=['#3b82f6','#10b981','#f59e0b','#8b5cf6','#ef4444','#06b6d4','#ec4899','#14b8a6','#a855f7','#f97316']; const ctx=document.getElementById(canvasId); if(!ctx) return; if(STATE.charts[canvasId]) STATE.charts[canvasId].destroy(); const labels=dataList.map(x=>x.cat), data=dataList.map(x=>x.value); STATE.charts[canvasId]=new Chart(ctx,{ type:'doughnut', data:{ labels, datasets:[{data, backgroundColor:data.map((_,i)=>colors[i%colors.length]), borderWidth:2}] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} } }); const leg=document.getElementById(legendId); if(leg){ const total=data.reduce((a,b)=>a+b,0); leg.innerHTML=dataList.length ? dataList.map((x,idx)=>`<div class="legend-item"><div class="legend-color" style="background-color:${colors[idx%colors.length]}"></div><span><strong>${esc(x.cat)}</strong> ${total?((x.value/total)*100).toFixed(0):0}%</span></div>`).join('') : `<div class="hint">Sem volume em ${esc(emptyLabel)}.</div>`; } }
+function renderAnaliseCharts(model){ const labels=model.selectedMonthsNums.map(monthLabelByNum); const ctxEvolucao=document.getElementById('chartEvolucao'); if(ctxEvolucao){ if(STATE.charts.evolucao) STATE.charts.evolucao.destroy(); STATE.charts.evolucao=new Chart(ctxEvolucao,{ type:'bar', data:{ labels, datasets:[ {label:model.previousPeriodsLabel, data:model.previousByMonth, backgroundColor:'#94a3b8', borderRadius:4}, {label:model.currentPeriodsLabel, data:model.currentByMonth, backgroundColor:'#3b82f6', borderRadius:4} ] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:10,weight:'700'}}}}, scales:{ y:{beginAtZero:true,ticks:{font:{size:9},callback:v=>fmtInt(v)}}, x:{ticks:{font:{size:9}}} } } }); } renderDonut('chartParticipacaoPrev','legendParticipacaoPrev',model.previousShare,model.previousPeriodsLabel); renderDonut('chartParticipacaoCurrent','legendParticipacaoCurrent',model.currentShare,model.currentPeriodsLabel); const body=document.getElementById('performanceTableBody'); if(body){ body.innerHTML=model.categories.map(c=>`<tr><td class="cat-name">${esc(c.cat)}</td><td class="num-cell">${c.metaPrev>0?fmtInt(c.metaPrev):'—'}</td><td class="num-cell">${c.metaCurrent>0?fmtInt(c.metaCurrent):'—'}</td><td class="num-cell ${growthClass(c.metaGrowthPct)}">${fmtPct(c.metaGrowthPct,true)}</td><td class="num-cell">${fmtInt(c.volPrev)}</td><td class="num-cell">${fmtInt(c.volCurrent)}</td><td class="num-cell ${growthClass(c.volGrowthPct)}">${fmtPct(c.volGrowthPct,true)}</td><td class="status-cell"><span class="loss-badge ${c.status}">${statusLabel(c.status)}</span></td></tr>`).join(''); } const ins=document.getElementById('insightsContainer'); if(ins){ const metaRealClients=model.clients.filter(c=>c.metaCurrent>0 || c.volCurrent>0 || c.metaPrev>0 || c.volPrev>0); const yoyClients=model.clients.filter(c=>c.volCurrent>0 || c.volPrev>0); let html=''; if(metaRealClients.length){ html += `<div class="insight-item ${metaRealClients.some(c=>(c.attainmentPctCurrent||0)<80)?'critical':'attention'}" onclick="this.classList.toggle('open')"><div class="insight-head"><div class="insight-icon">🎯</div><div class="insight-text"><strong>Meta x Real do cliente</strong> — informações dos dois anos e as duas comparações.</div><div class="insight-toggle">▼</div></div><div class="insight-detail"><table class="mini-table"><thead><tr><th>Cliente</th><th>${esc(model.previousPeriodsLabel)} Meta</th><th>${esc(model.previousPeriodsLabel)} Real</th><th>${esc(model.previousPeriodsLabel)} %</th><th>${esc(model.currentPeriodsLabel)} Meta</th><th>${esc(model.currentPeriodsLabel)} Real</th><th>${esc(model.currentPeriodsLabel)} %</th><th>Cresc. Meta</th><th>Cresc. Real</th></tr></thead><tbody>${metaRealClients.map(c=>`<tr><td>${esc(c.code)} • ${esc(c.cliente)}</td><td class="val">${c.metaPrev>0?fmtInt(c.metaPrev):'—'}</td><td class="val">${fmtInt(c.volPrev)}</td><td class="val ${growthClass(c.attainmentPctPrev!=null?c.attainmentPctPrev-100:null)}">${c.attainmentPctPrev==null?'—':c.attainmentPctPrev.toFixed(0)+'%'}</td><td class="val">${c.metaCurrent>0?fmtInt(c.metaCurrent):'—'}</td><td class="val">${fmtInt(c.volCurrent)}</td><td class="val ${growthClass(c.attainmentPctCurrent!=null?c.attainmentPctCurrent-100:null)}">${c.attainmentPctCurrent==null?'—':c.attainmentPctCurrent.toFixed(0)+'%'}</td><td class="val ${growthClass(c.metaGrowthPct)}">${fmtPct(c.metaGrowthPct,true)}</td><td class="val ${growthClass(c.volGrowthPct)}">${fmtPct(c.volGrowthPct,true)}</td></tr>`).join('')}</tbody></table></div></div>`; } if(yoyClients.length){ html += `<div class="insight-item ${yoyClients.some(c=>(c.volGrowthPct||0)<0)?'critical':'stable'}" onclick="this.classList.toggle('open')"><div class="insight-head"><div class="insight-icon">📆</div><div class="insight-text"><strong>Real ano atual x real ano anterior</strong> — % destacado para leitura rápida.</div><div class="insight-toggle">▼</div></div><div class="insight-detail"><table class="mini-table"><thead><tr><th>Cliente</th><th>${esc(model.previousPeriodsLabel)} Real</th><th>${esc(model.currentPeriodsLabel)} Real</th><th>% Cresc.</th></tr></thead><tbody>${yoyClients.map(c=>`<tr><td>${esc(c.code)} • ${esc(c.cliente)}</td><td class="val">${fmtInt(c.volPrev)}</td><td class="val">${fmtInt(c.volCurrent)}</td><td class="val ${growthClass(c.volGrowthPct)}">${fmtPct(c.volGrowthPct,true)}</td></tr>`).join('')}</tbody></table></div></div>`; } if(model.losingCategories.length){ html += `<div class="insight-item critical" onclick="this.classList.toggle('open')"><div class="insight-head"><div class="insight-icon">⚠️</div><div class="insight-text"><strong>Categorias que perderam volume</strong> nos períodos selecionados.</div><div class="insight-toggle">▼</div></div><div class="insight-detail"><table class="mini-table"><thead><tr><th>Categoria</th><th>${esc(model.previousPeriodsLabel)} Volume</th><th>${esc(model.currentPeriodsLabel)} Volume</th><th>% Cresc.</th></tr></thead><tbody>${model.losingCategories.map(c=>`<tr><td>${esc(c.cat)}</td><td class="val">${fmtInt(c.volPrev)}</td><td class="val">${fmtInt(c.volCurrent)}</td><td class="val ${growthClass(c.volGrowthPct)}">${fmtPct(c.volGrowthPct,true)}</td></tr>`).join('')}</tbody></table></div></div>`; } ins.innerHTML = html || '<div class="hint">Sem diagnósticos relevantes para os filtros aplicados.</div>'; } }
+function bindDetailTools(){ const input=document.getElementById('performanceSearch'); const body=document.getElementById('performanceTableBody'); if(input&&body) input.addEventListener('input',()=>{const q=input.value.toLowerCase(); Array.from(body.rows).forEach(r=>r.style.display=r.textContent.toLowerCase().includes(q)?'':'none');}); document.getElementById('exportPerformance')?.addEventListener('click',()=>{const rows=[...document.querySelectorAll('.performance-table tr')].map(r=>[...r.cells].map(c=>`"${c.textContent.replaceAll('"','""')}"`).join(',')); const blob=new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8;'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='performance-categorias.csv'; a.click(); URL.revokeObjectURL(a.href);}); }
+
+function normalizePeriodSelection(){ const s=document.getElementById('f_mes_ref'); if(!s) return; const selected=Array.from(s.selectedOptions).map(o=>o.value); if(!selected.length){ Array.from(s.options).forEach(o=>o.selected=o.value==='__ALL__'); return; } if(selected.includes('__ALL__') && selected.length>1){ Array.from(s.options).forEach(o=>o.selected = o.value!=='__ALL__'); } const after=Array.from(s.selectedOptions).map(o=>o.value); if(!after.length){ Array.from(s.options).forEach(o=>o.selected=o.value==='__ALL__'); } }
+function renderDiagnostic(model){ const t=model.totals; const growth=t.fatGrowthPct, volGrowth=t.volGrowthPct, att=t.currentMetaPct; const top=model.categories[0]; const loss=model.losingCategories[0]; const clientsBelow=model.clients.filter(c=>c.metaCurrent>0 && c.attainmentPctCurrent<100).length; const items=[{cls:growth!=null&&growth>=0?'good':'bad',label:'Faturamento',text:growth==null?'Sem comparação':`${growth>=0?'Cresceu':'Caiu'} ${Math.abs(growth).toFixed(1)}% vs período anterior.`},{cls:volGrowth!=null&&volGrowth>=0?'good':'bad',label:'Volume',text:volGrowth==null?'Sem comparação':`${volGrowth>=0?'Alta':'Queda'} de ${Math.abs(volGrowth).toFixed(1)}% no volume.`},{cls:top?'good':'warn',label:'Motor do resultado',text:top?`${esc(top.cat)} lidera com ${fmtMon(top.fatCurrent)}.`:'Sem categoria dominante.'},{cls:loss?'warn':'good',label:'Ponto de atenção',text:loss?`${esc(loss.cat)} caiu ${Math.abs(loss.volGrowthPct||0).toFixed(1)}% em volume.`:`${clientsBelow} cliente(s) abaixo da meta.`}]; return `<section class="chart-section"><div class="chart-header"><div class="title">Diagnóstico Comercial</div><div class="compare-note">Resumo para decisão em poucos segundos</div></div><div class="diagnostic-grid">${items.map(x=>`<div class="diagnostic-item ${x.cls}"><div class="diag-label">${x.label}</div><div class="diag-text">${x.text}</div></div>`).join('')}</div></section>`; }
+function renderFilterSummary(){ const f=activeFilters(); const labels=[['f_ger','gerente'],['f_coord','coordenação'],['f_vend','vendedor'],['f_cat','categoria'],['f_cli','cliente'],['f_uf','UF'],['f_seg','segmento']]; const active=labels.filter(([id])=>selectedValues(id).length); const search=String(document.getElementById('f_cli_search')?.value||'').trim(); const period=getPeriodSelection(); const count=active.length+(period.filtered?1:0)+(search?1:0); const el=document.getElementById('filterCount'); if(el) el.textContent=count; const summary=(active.length?active.map(([,label])=>{const id=labels.find(x=>x[1]===label)[0]; return `${selectedValues(id).length} ${label}${selectedValues(id).length>1?'s':''}`;}).join(' | '):'Todos os clientes')+(search?` | busca: ${search}`:''); const meta=document.getElementById('executiveMeta'); if(meta) meta.innerHTML=`<span class="filter-marker"><strong>${fmtInt(baseFilteredRows().length?new Set(baseFilteredRows().map(r=>String(r.CLIFOR||r.Clifor||r.CLIENTE||r.Cliente))).size:0)}</strong> clientes analisados</span><span class="filter-marker">${esc(summary)}</span><span class="filter-marker"><strong>Período:</strong> ${esc(period.filtered?period.periods.map(ymLabel).join(', '):'todos os períodos')}</span>`; }
+function renderCommercialInsights(rows, model){ const t=model.totals; const topCats=model.categories.slice(0,5); const topClients=model.clients.slice(0,5); const money=v=>fmtMon(v); const catRows=topCats.map((c,i)=>`<tr><td><span class="rank">${i+1}</span><strong>${esc(c.cat)}</strong></td><td class="num">${money(c.fatCurrent)}</td><td class="num">${fmtInt(c.volCurrent)}</td><td class="num">${c.currentMetaPct==null?'—':c.currentMetaPct.toFixed(0)+'%'}</td></tr>`).join(''); const clientRows=topClients.map((c,i)=>`<tr><td><span class="rank">${i+1}</span><strong>${esc(c.cliente)}</strong></td><td class="num">${money(c.fatCurrent)}</td><td class="num">${fmtInt(c.volCurrent)}</td><td class="num">${c.attainmentPctCurrent==null?'—':c.attainmentPctCurrent.toFixed(0)+'%'}</td></tr>`).join(''); return `<section class="commercial-section"><div class="commercial-grid"><div class="commercial-card"><div class="commercial-title">Categorias líderes</div><div class="commercial-note">Ranking por faturamento no período atual.</div><table class="commercial-table"><thead><tr><th>Categoria</th><th>Faturamento</th><th>Volume</th><th>Meta</th></tr></thead><tbody>${catRows||'<tr><td colspan="4">Sem dados.</td></tr>'}</tbody></table></div><div class="commercial-card"><div class="commercial-title">Clientes líderes</div><div class="commercial-note">Contas que concentram maior faturamento.</div><table class="commercial-table"><thead><tr><th>Cliente</th><th>Faturamento</th><th>Volume</th><th>Meta</th></tr></thead><tbody>${clientRows||'<tr><td colspan="4">Sem dados.</td></tr>'}</tbody></table></div></div></section>`; }
+
+function rowVal(r, names, fallback=''){ for(const n of names){ if(r[n]!==undefined && r[n]!==null && String(r[n]).trim()!=='') return r[n]; } return fallback; }
+function prevYM(ym,n=1){ let y=Math.floor(ym/100),m=ym%100; m-=n; while(m<=0){m+=12;y--;} return y*100+m; }
+function deriveBI(rows, model){
+ const periods=activeFilters().periods.slice().sort((a,b)=>a-b); const curPeriods=periods.filter(x=>Math.floor(x/100)===model.currentYear); const currentYearPeriods=(STATE.availablePeriods||[]).filter(x=>Math.floor(x/100)===model.currentYear).sort((a,b)=>a-b); const anchor=currentYearPeriods[currentYearPeriods.length-1]||((curPeriods.length?curPeriods[curPeriods.length-1]:(periods[periods.length-1]||0))); const m1=prevYM(anchor,1),m2=prevYM(anchor,2); const currentSet=new Set(curPeriods.length?curPeriods:[anchor]);
+ const client=new Map(), cat=new Map(), product=new Map(), uf=new Map(), segment=new Map(), anchorCat=new Map();
+ rows.forEach(r=>{ const ym=getYM(r); if(!ym)return; const code=String(rowVal(r,['CLIFOR','Clifor'],'—')).trim(); const name=String(rowVal(r,['CLIENTE','Cliente'],'Sem nome')).trim(); const key=code+'||'+name; const vend=String(rowVal(r,['VENDEDOR','Vendedor'],'Não informado')).trim(); const ger=String(rowVal(r,['GERENTE','Gerente'],'Não informado')).trim(); const ca=String(rowVal(r,['CATEGORIA','Categoria'],'Sem categoria')).trim(); const fat=num(rowVal(r,['FATURAMENTO','Faturamento'],0)),vol=num(rowVal(r,['VOLUME','Volume'],0)); const prod=String(rowVal(r,['PRODUTO','Produto','ITEM','Item','SKU','Sku'],'Sem produto')).trim()||'Sem produto'; const prodDesc=String(rowVal(r,['MATERIAL','Material','DESCRICAO','Descrição','DESCRIÇÃO','DESC_ITEM','Descrição Item'],'')).trim(); const prodLabel=prodDesc&&prodDesc!==prod?`${prod} — ${prodDesc}`:prod; const state=String(rowVal(r,['UF','Uf','ESTADO','Estado'],'Não informado')).trim()||'Não informado'; const channel=String(rowVal(r,['SEGMENTO','Segmento','CANAL','Canal'],'Não informado')).trim()||'Não informado'; const addDim=(map,name)=>{let d=getOrCreate(map,name,()=>({name,curFat:0,curVol:0,prevFat:0,prevVol:0}));if(currentSet.has(ym)){d.curFat+=fat;d.curVol+=vol}if(Math.floor(ym/100)===model.previousYear&&curPeriods.some(p=>p%100===ym%100)){d.prevFat+=fat;d.prevVol+=vol}}; const ac=getOrCreate(anchorCat,ca,()=>({name:ca,curFat:0,curVol:0,prevFat:0,prevVol:0})); if(ym===anchor){ac.curFat+=fat;ac.curVol+=vol} if(ym===Math.floor(model.previousYear)*100+(anchor%100)){ac.prevFat+=fat;ac.prevVol+=vol}; addDim(product,prodLabel); addDim(uf,state); addDim(segment,channel); let x=getOrCreate(client,key,()=>({key,code,name,vend,ger,curFat:0,curVol:0,m1Fat:0,m2Fat:0,m1Vol:0,m2Vol:0,prevFat:0,prevVol:0,catsCur:new Set(),catsHist:new Set(),months:new Map()})); x.vend=vend||x.vend;x.ger=ger||x.ger; x.catsHist.add(ca); let mm=x.months.get(ym)||{fat:0,vol:0};mm.fat+=fat;mm.vol+=vol;x.months.set(ym,mm); if(currentSet.has(ym)){x.curFat+=fat;x.curVol+=vol;if(fat>0||vol>0)x.catsCur.add(ca)} if(ym===anchor){x.anchorFat=(x.anchorFat||0)+fat;x.anchorVol=(x.anchorVol||0)+vol} if(ym===m1){x.m1Fat+=fat;x.m1Vol+=vol} if(ym===m2){x.m2Fat+=fat;x.m2Vol+=vol} if(Math.floor(ym/100)===model.previousYear && curPeriods.some(p=>p%100===ym%100)){x.prevFat+=fat;x.prevVol+=vol}
+ let cc=getOrCreate(cat,ca,()=>({name:ca,curFat:0,curVol:0,prevFat:0,prevVol:0,clients:new Set(),falling:new Set()})); if(currentSet.has(ym)){cc.curFat+=fat;cc.curVol+=vol;if(fat>0||vol>0)cc.clients.add(key)} if(Math.floor(ym/100)===model.previousYear && curPeriods.some(p=>p%100===ym%100)){cc.prevFat+=fat;cc.prevVol+=vol}
+ });
+ const clients=[...client.values()].map(x=>{x.avgFat=(x.m1Fat+x.m2Fat)/2;x.avgVol=(x.m1Vol+x.m2Vol)/2;x.potFat=Math.max(0,x.avgFat-x.curFat);x.potVol=Math.max(0,x.avgVol-x.curVol);x.varFat=x.avgFat>0?(x.curFat-x.avgFat)/x.avgFat*100:null;x.varVol=x.avgVol>0?(x.curVol-x.avgVol)/x.avgVol*100:null;x.yoyFat=x.prevFat>0?(x.curFat-x.prevFat)/x.prevFat*100:null;x.newClient=x.curFat>0&&x.m1Fat===0&&x.m2Fat===0;x.noBuy=x.curFat===0&&(x.m1Fat>0||x.m2Fat>0);x.anchorFat=x.anchorFat||0;x.anchorVol=x.anchorVol||0;x.noBuyAnchor=x.anchorFat===0&&(x.m1Fat>0||x.m2Fat>0);x.recovered=x.curFat>0&&x.m1Fat===0&&x.m2Fat>0;x.health=x.noBuy?'Sem compra':x.newClient?'Novos clientes':x.recovered?'Recuperados':x.varVol==null?'Estáveis':x.varVol<-10?'Em queda':x.varVol>10?'Crescendo':'Estáveis';x.type=x.noBuy?'CLIENTE SEM COMPRA':(x.varVol!=null&&x.varVol<-10?'QUEDA DE VOLUME':(x.varFat!=null&&x.varFat<-10?'QUEDA DE FATURAMENTO':x.recovered?'RECUPERAÇÃO DE CLIENTE':'AUMENTO DE TICKET')); x.impact=x.potFat; return x}).filter(x=>x.curFat||x.avgFat||x.curVol||x.avgVol||x.prevFat||x.prevVol);
+ clients.forEach(x=>{ if(x.health==='Em queda'||x.health==='Sem compra'){ for(const c of x.catsHist){cat.get(c)?.falling.add(x.key)} } });
+ const enrichDim=d=>({...d,growth:d.prevVol>0?(d.curVol-d.prevVol)/d.prevVol*100:null,share:model.totals.fatCurrent?d.curFat/model.totals.fatCurrent*100:0,price:d.curVol?d.curFat/d.curVol:0}); const anchorCategories=[...anchorCat.values()].map(enrichDim); const products=[...product.values()].map(enrichDim).sort((a,z)=>z.curFat-a.curFat); const geographies=[...uf.values()].map(enrichDim).sort((a,z)=>z.curFat-a.curFat); const channels=[...segment.values()].map(enrichDim).sort((a,z)=>z.curFat-a.curFat); const cats=[...cat.values()].map(c=>({...c,growth:c.prevVol>0?(c.curVol-c.prevVol)/c.prevVol*100:null,share:model.totals.volCurrent?c.curVol/model.totals.volCurrent*100:0,price:c.curVol?c.curFat/c.curVol:0,prevPrice:c.prevVol?c.prevFat/c.prevVol:0}));
+ const healthNames=['Crescendo','Estáveis','Em queda','Sem compra','Recuperados','Novos clientes']; const health=healthNames.map(n=>({name:n,count:clients.filter(x=>x.health===n).length})); const risk=clients.filter(x=>x.noBuy||(x.varVol!=null&&x.varVol<-10)||(x.varFat!=null&&x.varFat<-10)).sort((a,b)=>b.potFat-a.potFat); const opp=clients.filter(x=>x.potFat>0||x.potVol>0||x.type==='RECUPERAÇÃO DE CLIENTE').sort((a,b)=>b.potFat-a.potFat); return {anchor,m1,m2,clients,cats,anchorCategories,products,geographies,channels,health,risk,opp};
+}
+function activeOppFilter(){return selectedValues('f_opp')}
+function filterOpp(list){const f=activeOppFilter();return f.length?list.filter(x=>f.includes(x.type)):list}
+function biKpi(label,value,sub,pct){return `<div class="kpi"><div class="label">${label}</div><div class="value">${value}</div><div class="trend ${growthClass(pct)}">${pct==null?'Comparação indisponível':((pct>=0?'▲ ':'▼ ')+fmtPct(pct,true))}</div><div class="s">${sub}</div></div>`}
+
+function varPhrase(v,label){if(v==null)return `${label}: comparação indisponível`;return `${label} ${v>=0?'▲':'▼'} ${Math.abs(v).toFixed(1)}%`;}
+function executivePeriodLabel(model){const cur=model.currentPeriods||[], prev=model.previousPeriods||[];const c=cur.length?cur.map(ymLabel).join(', '):String(model.currentYear||''),p=prev.length?prev.map(ymLabel).join(', '):String(model.previousYear||'');return `${c} vs ${p}`;}
+function compareCard(label,current,previous,pct){return `<div class="compare-card"><div class="cc-label">${label}</div><div class="cc-values"><span class="cc-current">${current}</span><span class="cc-prev">Ano anterior: <strong>${previous}</strong></span></div><div class="cc-var ${growthClass(pct)}">${pct==null?'Comparação indisponível':`${pct>=0?'▲':'▼'} ${Math.abs(pct).toFixed(1)}%`}</div></div>`;}
+function renderDecisionTop(b,t,pricePct,model){
+ const falling=b.clients.filter(x=>x.health==='Em queda').length,noBuy=b.clients.filter(x=>x.noBuy).length,clientPct=pctGrowth(t.currentClientsCount,t.previousClientsCount),periodLabel=executivePeriodLabel(model);
+ return `<div class="compare-caption" style="margin-top:12px">Comparativo executivo | Atual × Ano anterior</div><div class="period-compare-label">${periodLabel}</div><div class="compare-grid">${compareCard('Faturamento',fmtMon(t.fatCurrent),fmtMon(t.fatPrev),t.fatGrowthPct)}${compareCard('Volume',fmtInt(t.volCurrent)+' kg',fmtInt(t.volPrev)+' kg',t.volGrowthPct)}${compareCard('Clientes ativos',fmtInt(t.currentClientsCount),fmtInt(t.previousClientsCount),clientPct)}${compareCard('Preço médio',fmtMon(t.priceAvgCurrent),fmtMon(t.priceAvgPrev),pricePct)}</div><div class="decision-strip">Positivados <strong>${fmtInt(b.clients.filter(x=>x.curFat>0).length)}</strong> &nbsp;•&nbsp; Em queda <strong>${falling}</strong> &nbsp;•&nbsp; Sem compra <strong>${noBuy}</strong></div>`;
+}
+function renderPriorities(b){const risk=[...b.risk].sort((a,z)=>z.potFat-a.potFat), total=risk.reduce((s,x)=>s+x.potFat,0), top10=risk.slice(0,10).reduce((s,x)=>s+x.potFat,0), conc=total?top10/total*100:0, no=b.clients.filter(x=>x.noBuy), noPot=no.reduce((s,x)=>s+x.potFat,0), fall=b.clients.filter(x=>x.health==='Em queda'), fallPot=fall.reduce((s,x)=>s+x.potFat,0), topCat=[...b.cats].filter(x=>x.growth!=null).sort((a,z)=>a.growth-z.growth)[0];return `<section class="panel bi-section"><div class="section-head"><div><h3>O que precisa da minha atenção?</h3><p>Prioridades calculadas para orientar a ação comercial</p></div></div><div class="priorities"><div class="priority-card risk"><div class="p-tag">1 • Ação imediata</div><div class="p-title">Clientes sem compra</div><div class="p-value">${fmtMon(noPot)}</div><div class="p-detail">${no.length} clientes • reativar primeiro os maiores potenciais</div></div><div class="priority-card warn"><div class="p-tag">2 • Atenção</div><div class="p-title">Clientes em queda</div><div class="p-value">${fmtMon(fallPot)}</div><div class="p-detail">${fall.length} clientes vs média dos 2 meses anteriores</div></div><div class="priority-card info"><div class="p-tag">3 • Concentração</div><div class="p-title">Top 10 oportunidades</div><div class="p-value">${conc.toFixed(0)}%</div><div class="p-detail">dos ${fmtMon(total)} de potencial${topCat&&topCat.growth<0?` • ${esc(topCat.name)} é a maior queda de volume`:''}</div></div></div></section>`}
+function renderExecutiveStory(b,t,pricePct){const worst=[...b.cats].filter(x=>x.growth!=null).sort((a,z)=>a.growth-z.growth)[0],pot=b.risk.reduce((s,x)=>s+x.potFat,0), n=b.risk.length;return `<section class="panel bi-section"><div class="section-head"><div><h3>Leitura Executiva</h3><p>Resultado → atenção → risco → ação</p></div></div><div class="story-grid"><div class="story-card story-good"><div class="story-label">Resultado</div><div class="story-text">Faturamento <strong>${fmtPct(t.fatGrowthPct,true)}</strong> e volume <strong>${fmtPct(t.volGrowthPct,true)}</strong> vs mesmo período do ano anterior.</div></div><div class="story-card story-warn"><div class="story-label">Atenção</div><div class="story-text">${worst&&worst.growth<0?`<strong>${esc(worst.name)}</strong> registra a maior retração de volume: <strong>${fmtPct(worst.growth,true)}</strong>.`:'Não há categoria com retração comparável no recorte.'}${pricePct!=null&&t.volGrowthPct>0&&pricePct<0?' Preço caiu enquanto volume cresceu, possível efeito de mix/preço.':''}</div></div><div class="story-card story-risk"><div class="story-label">Risco</div><div class="story-text"><strong>${n} clientes</strong> requerem atenção e representam <strong>${fmtMon(pot)}</strong> de potencial calculado.</div></div><div class="story-card story-action"><div class="story-label">Ação sugerida</div><div class="story-text">Priorize clientes <strong>sem compra</strong> e, depois, clientes com maior potencial financeiro e queda de volume.</div></div></div></section>`}
+function actionFor(x){if(x.noBuy)return 'Reativar';if(x.varVol!=null&&x.varVol<-10)return 'Recuperar volume';if(x.varFat!=null&&x.varFat<-10)return 'Revisar faturamento';if(x.recovered)return 'Consolidar retorno';return 'Investigar';}
+function simpleOppRows(list){return list.slice(0,10).map((x,i)=>`<tr class="clickable simple-opp" data-client="${esc(x.key)}"><td>${i+1}</td><td><strong>${esc(x.name)}</strong><div class="event-sub">${esc(x.vend)}</div></td><td><div class="event-main">${x.noBuy?'Sem compra':x.varVol!=null?`Volume ${fmtPct(x.varVol,true)}`:x.type}</div><div class="event-sub">Média 2M ${fmtMon(x.avgFat)}</div></td><td><strong>${fmtMon(x.potFat)}</strong><div class="event-sub">${fmtInt(x.potVol)} kg potencial</div></td><td><span class="action-pill">${actionFor(x)}</span></td></tr>`).join('')}
+function renderSimpleTop10(list){return `<section class="panel bi-section"><div class="section-head"><div><h3>Top 10 para Ação</h3><p>Quem priorizar, o que aconteceu e quanto está em jogo. Clique no cliente para detalhar.</p></div></div><div class="table-wrap"><table class="impact-table top10-action-table"><thead><tr><th>#</th><th>Cliente / vendedor</th><th>O que aconteceu?</th><th>Impacto</th><th>Ação</th></tr></thead><tbody>${simpleOppRows(list)}</tbody></table></div></section>`}
+function renderCommercialReading(b,t,pricePct,model){
+ const lostYoY=b.clients.filter(x=>x.curFat===0&&x.prevFat>0).sort((a,z)=>z.prevFat-a.prevFat);
+ const lostRecent=b.clients.filter(x=>x.noBuyAnchor).sort((a,z)=>(z.m1Fat+z.m2Fat)-(a.m1Fat+a.m2Fat));
+ const topCats=[...b.cats].filter(x=>x.curFat>0).sort((a,z)=>z.curFat-a.curFat);
+ const noCats=(b.anchorCategories||[]).filter(x=>x.curFat===0&&x.prevFat>0).sort((a,z)=>z.prevFat-a.prevFat);
+ const metaByCat=new Map(model.categories.map(x=>[x.cat,x]));
+ const row=(x,i)=>`<tr class="clickable ${i>=8?'reading-extra':''}" data-client="${esc(x.key)}"><td><strong>${esc(x.name)}</strong><div class="event-sub">${esc(x.vend)}</div></td><td>${fmtMon(x.prevFat)}</td><td>${fmtMon(x.curFat)}</td><td class="grow-neg">Sem compra</td></tr>`;
+ const clientRows=lostYoY.map(row).join('');
+ const recentRows=lostRecent.slice(0,10).map(x=>`<tr class="clickable" data-client="${esc(x.key)}"><td><strong>${esc(x.name)}</strong><div class="event-sub">${esc(x.vend)}</div></td><td>${fmtMon(x.m1Fat)}</td><td>${fmtMon((x.m1Fat+x.m2Fat)/2)}</td><td>${fmtMon(x.anchorFat)}</td><td class="grow-neg">${x.m1Fat?fmtPct((x.anchorFat-x.m1Fat)/x.m1Fat*100,true):'—'}</td></tr>`).join('');
+ const catRows=topCats.slice(0,8).map((x,i)=>{const m=metaByCat.get(x.name)||{};const metaVar=pctGrowth(m.metaCurrent||0,m.metaPrev||0),volVar=pctGrowth(x.curVol,x.prevVol),priceVar=pctGrowth(x.price,x.prevPrice);return `<tr><td><span class="rank">${i+1}</span><strong>${esc(x.name)}</strong></td><td>${fmtInt(m.metaPrev)} kg</td><td>${fmtInt(m.metaCurrent)} kg</td><td class="${growthClass(metaVar)}">${fmtPct(metaVar,true)}</td><td>${fmtInt(x.prevVol)} kg</td><td>${fmtInt(x.curVol)} kg</td><td class="${growthClass(volVar)}">${fmtPct(volVar,true)}</td><td>${fmtMon(x.prevPrice)}</td><td>${fmtMon(x.price)}</td><td class="${growthClass(priceVar)}">${fmtPct(priceVar,true)}</td></tr>`}).join('');
+ const noCatRows=noCats.map(x=>`<tr><td><strong>${esc(x.name)}</strong></td><td>${fmtMon(x.prevFat)}</td><td>${fmtInt(x.prevVol)} kg</td><td class="grow-neg">Não vendeu no mês atual</td></tr>`).join('');
+ return `<section class="panel bi-section reading-section"><div class="section-head"><div><h3>Análise de categorias</h3><p>Categorias mais vendidas e categorias sem venda no período atual.</p></div></div><div class="reading-grid"><div class="reading-card"><div class="reading-title">Categorias mais vendidas</div><div class="reading-note">Comparativo de meta, volume e preço médio entre ano anterior e ano atual, com variação percentual.</div><div class="table-wrap"><table class="reading-table"><thead><tr><th>Categoria</th><th>Meta ant.</th><th>Meta atual</th><th>Var. meta</th><th>Vol. ant.</th><th>Vol. atual</th><th>Var. vol.</th><th>Preço ant.</th><th>Preço atual</th><th>Var. preço</th></tr></thead><tbody>${catRows||'<tr><td colspan="10">Sem categorias vendidas.</td></tr>'}</tbody></table></div></div><div class="reading-card"><div class="reading-title">Categorias sem venda no período atual</div><div class="reading-note">Comparação do último mês do ano atual contra o mesmo mês do ano anterior.</div><div class="table-wrap"><table class="reading-table"><thead><tr><th>Categoria</th><th>Antes</th><th>Volume antes</th><th>Sinal</th></tr></thead><tbody>${noCatRows||'<tr><td colspan="4">Nenhuma categoria zerada no mês de referência.</td></tr>'}</tbody></table></div></div></div></section>`;
+}
+function toggleReadingRows(btn){const rows=btn.closest('.reading-card')?.querySelectorAll('.reading-extra')||[];const open=[...rows].some(r=>r.classList.contains('open'));rows.forEach(r=>r.classList.toggle('open',!open));btn.textContent=open?'Ver todos os perdidos':'Ocultar perdidos';}
+
+function execUnavailable(label,detail){return `<div class="unavailable-item"><strong>${label}</strong>${detail}</div>`;}
+function renderExecutiveDashboard(b,t,pricePct,model){
+ const topCat=[...b.cats].filter(x=>x.curFat>0).sort((a,z)=>z.curFat-a.curFat)[0];
+ const worstCat=[...b.cats].filter(x=>x.growth!=null).sort((a,z)=>a.growth-z.growth)[0];
+ const topClient=[...b.clients].sort((a,z)=>z.curFat-a.curFat)[0];
+ const lost=b.clients.filter(x=>x.curFat===0&&x.prevFat>0).length;
+ const noBuy=b.clients.filter(x=>x.noBuy).length;
+ const sellerMap=new Map(); b.clients.forEach(x=>{const k=x.vend||'Não informado';const v=sellerMap.get(k)||{name:k,fat:0,prevFat:0,vol:0,prevVol:0,clients:0,prevClients:0,pot:0};v.fat+=x.curFat;v.prevFat+=x.prevFat;v.vol+=x.curVol;v.prevVol+=x.prevVol;v.clients+=x.curFat>0?1:0;v.prevClients+=x.prevFat>0?1:0;v.pot+=x.potFat;sellerMap.set(k,v)});
+ const sellers=[...sellerMap.values()].sort((a,z)=>z.fat-a.fat).slice(0,10);
+ const sellerRows=sellers.map((x,i)=>`<tr><td><span class="rank">${i+1}</span><strong>${esc(x.name)}</strong></td><td class="num">${fmtMon(x.prevFat)}</td><td class="num">${fmtMon(x.fat)}</td><td class="num ${growthClass(pctGrowth(x.fat,x.prevFat))}">${fmtPct(pctGrowth(x.fat,x.prevFat),true)}</td><td class="num">${fmtInt(x.prevVol)} kg</td><td class="num">${fmtInt(x.vol)} kg</td><td class="num ${growthClass(pctGrowth(x.vol,x.prevVol))}">${fmtPct(pctGrowth(x.vol,x.prevVol),true)}</td><td class="num">${x.prevClients}</td><td class="num">${x.clients}</td><td class="num ${growthClass(pctGrowth(x.clients,x.prevClients))}">${fmtPct(pctGrowth(x.clients,x.prevClients),true)}</td><td class="num">${fmtMon(x.pot)}</td></tr>`).join('');
+ const statusClass=t.fatGrowthPct!=null?(t.fatGrowthPct>=0?'good':'risk'):'info';
+ return `<div class="exec-dashboard">
+ <section class="exec-hero"><h3>Resumo executivo da performance comercial</h3><p>Leitura gerencial orientada à decisão: resultado, comparação, perdas, concentração e próximos focos de ação.</p><div class="exec-summary"><div><span>Principal ganho</span><strong>${topCat?`Categoria ${esc(topCat.name)} lidera com ${fmtMon(topCat.curFat)}`:'Sem dados de categoria'}</strong></div><div><span>Principal perda</span><strong>${worstCat&&worstCat.growth<0?`${esc(worstCat.name)} caiu ${fmtPct(worstCat.growth,true)} em volume`:'Nenhuma queda de categoria identificada'}</strong></div><div><span>Risco comercial</span><strong>${lost} clientes perdidos no ano e ${noBuy} sem compra recente</strong></div></div></section>
+ <section class="exec-kpis"><div class="exec-kpi"><div class="k">Faturamento total</div><div class="v">${fmtMon(t.fatCurrent)}</div><div class="s">Atual: ${fmtMon(t.fatCurrent)} • Anterior: ${fmtMon(t.fatPrev)} • ${fmtPct(t.fatGrowthPct,true)}</div></div><div class="exec-kpi"><div class="k">Volume vendido</div><div class="v">${fmtInt(t.volCurrent)} kg</div><div class="s">Atual: ${fmtInt(t.volCurrent)} kg • Anterior: ${fmtInt(t.volPrev)} kg • ${fmtPct(t.volGrowthPct,true)}</div></div><div class="exec-kpi"><div class="k">Clientes ativos</div><div class="v">${fmtInt(t.currentClientsCount)}</div><div class="s">Atual: ${fmtInt(t.currentClientsCount)} • Anterior: ${fmtInt(t.previousClientsCount)} • ${fmtPct(pctGrowth(t.currentClientsCount,t.previousClientsCount),true)}</div></div><div class="exec-kpi"><div class="k">Preço médio</div><div class="v">${fmtMon(t.priceAvgCurrent)}</div><div class="s">Atual: ${fmtMon(t.priceAvgCurrent)} • Anterior: ${fmtMon(t.priceAvgPrev)} • ${pricePct==null?'Sem comparação':fmtPct(pricePct,true)}</div></div><div class="exec-kpi"><div class="k">Meta de volume</div><div class="v">${t.currentMetaPct==null?'—':t.currentMetaPct.toFixed(0)+'%'}</div><div class="s">Atual: ${fmtInt(t.volCurrent)} / ${fmtInt(t.metaCurrent)} kg • Anterior: ${fmtInt(t.volPrev)} / ${fmtInt(t.metaPrev)} kg</div></div><div class="exec-kpi"><div class="k">Ticket médio</div><div class="v">${t.currentClientsCount?fmtMon(t.fatCurrent/t.currentClientsCount):'—'}</div><div class="s">Atual: ${t.currentClientsCount?fmtMon(t.fatCurrent/t.currentClientsCount):'—'} • Anterior: ${t.previousClientsCount?fmtMon(t.fatPrev/t.previousClientsCount):'—'}</div></div><div class="exec-kpi"><div class="k">Crescimento MoM</div><div class="v">—</div><div class="s">Pedido/data diária não disponível</div></div><div class="exec-kpi"><div class="k">Margem %</div><div class="v">—</div><div class="s">custo/margem não disponível</div></div></section>
+ <section class="exec-grid2"><div class="exec-panel"><h3>Evolução temporal disponível</h3><div class="sub">Volume por mês: ano atual versus ano anterior.</div><div class="exec-chart"><canvas id="execTrendChart"></canvas></div></div><div class="exec-panel"><h3>Insights automáticos</h3><div class="sub">Alertas calculados a partir do recorte aplicado.</div><div class="exec-alerts"><div class="exec-alert ${statusClass}"><b>Resultado</b>${t.fatGrowthPct==null?'Sem comparação anual':`Faturamento ${t.fatGrowthPct>=0?'cresceu':'caiu'} ${Math.abs(t.fatGrowthPct).toFixed(1)}%.`}</div><div class="exec-alert ${worstCat&&worstCat.growth<0?'risk':'good'}"><b>Categoria</b>${worstCat&&worstCat.growth<0?`${esc(worstCat.name)} é a maior queda.`:'Não há queda de categoria no recorte.'}</div><div class="exec-alert risk"><b>Clientes perdidos</b>${lost} cliente(s) sem faturamento no atual e com venda no ano anterior.</div><div class="exec-alert warn"><b>Oportunidade</b>${topClient?`Maior cliente atual: ${esc(topClient.name)} (${fmtMon(topClient.curFat)}).`:'Sem cliente líder identificado.'}</div></div></div></section>
+ <section class="exec-panel"><h3>Produtos, geografia e canais</h3><div class="sub">Dimensões disponíveis na base: item/produto, UF e Segmento como canal de venda.</div><div class="dimension-grid"><div class="dimension-card"><h4>Top produtos/itens</h4><p>Faturamento, participação e crescimento.</p><table class="dimension-table"><thead><tr><th>Produto / descrição</th><th>Fat. atual</th><th>Fat. ant.</th><th>Vol. atual</th><th>Vol. ant.</th><th>Part.</th><th>Var.</th></tr></thead><tbody>${b.products.filter(x=>x.name!=='Sem produto').map((x,i)=>`<tr class="product-extra ${i>=10?'is-extra':''}"><td><strong>${esc(x.name)}</strong><div class="dim-bar"><span style="width:${Math.min(100,x.share)}%"></span></div></td><td class="num">${fmtMon(x.curFat)}</td><td class="num">${fmtMon(x.prevFat)}</td><td class="num">${fmtInt(x.curVol)} kg</td><td class="num">${fmtInt(x.prevVol)} kg</td><td class="num">${x.share.toFixed(1)}%</td><td class="num ${growthClass(x.growth)}">${fmtPct(x.growth,true)}</td></tr>`).join('')||'<tr><td colspan="7">Sem produto identificado.</td></tr>'}</tbody></table><div class="reading-more product-more"><button type="button" onclick="toggleProducts(this)">Ver mais produtos</button></div></div></div><div class="dimension-card"><h4>Vendas por UF</h4><p>Estados ordenados por faturamento.</p><table class="dimension-table"><thead><tr><th>UF</th><th>Fat. atual</th><th>Fat. ant.</th><th>Vol. atual</th><th>Vol. ant.</th><th>Part.</th><th>Var.</th></tr></thead><tbody>${b.geographies.slice(0,10).map(x=>`<tr><td><strong>${esc(x.name)}</strong></td><td class="num">${fmtMon(x.curFat)}</td><td class="num">${fmtMon(x.prevFat)}</td><td class="num">${fmtInt(x.curVol)} kg</td><td class="num">${fmtInt(x.prevVol)} kg</td><td class="num">${x.share.toFixed(1)}%</td><td class="num ${growthClass(x.growth)}">${fmtPct(x.growth,true)}</td></tr>`).join('')||'<tr><td colspan="7">Sem UF identificado.</td></tr>'}</tbody></table></div><div class="dimension-card"><h4>Canal / Segmento</h4><p>Segmento usado como canal de venda.</p><table class="dimension-table"><thead><tr><th>Segmento</th><th>Fat. atual</th><th>Fat. ant.</th><th>Vol. atual</th><th>Vol. ant.</th><th>Part.</th><th>Var.</th></tr></thead><tbody>${b.channels.slice(0,10).map(x=>`<tr><td><strong>${esc(x.name)}</strong></td><td class="num">${fmtMon(x.curFat)}</td><td class="num">${fmtMon(x.prevFat)}</td><td class="num">${fmtInt(x.curVol)} kg</td><td class="num">${fmtInt(x.prevVol)} kg</td><td class="num">${x.share.toFixed(1)}%</td><td class="num ${growthClass(x.growth)}">${fmtPct(x.growth,true)}</td></tr>`).join('')||'<tr><td colspan="7">Sem segmento identificado.</td></tr>'}</tbody></table></div></div></section>
+ <section class="exec-grid3"><div class="exec-panel"><h3>Ranking de vendedores</h3><div class="sub">Faturamento, volume, clientes ativos e potencial de recuperação.</div><div class="table-wrap"><table class="exec-table"><thead><tr><th>Vendedor</th><th>Fat. anterior</th><th>Fat. atual</th><th>Var. fat.</th><th>Vol. anterior</th><th>Vol. atual</th><th>Var. volume</th><th>Clientes ant.</th><th>Clientes atual</th><th>Var. clientes</th><th>Potencial</th></tr></thead><tbody>${sellerRows||'<tr><td colspan="11">Sem dados de vendedor.</td></tr>'}</tbody></table></div></div></section>
+ </div>`;
+}
+function renderExecutiveCharts(model){const c=document.getElementById('execTrendChart');if(!c)return;if(STATE.charts.execTrend)STATE.charts.execTrend.destroy();STATE.charts.execTrend=new Chart(c,{type:'line',data:{labels:model.selectedMonthsNums.map(monthLabelByNum),datasets:[{label:model.previousPeriodsLabel,data:model.previousByMonth,borderColor:'#94a3b8',backgroundColor:'rgba(148,163,184,.12)',tension:.3,fill:true},{label:model.currentPeriodsLabel,data:model.currentByMonth,borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.12)',tension:.3,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true}}}});}
+
+function renderShareFinal(model){
+ const colors=['#2563eb','#10b981','#f59e0b','#8b5cf6','#ef4444','#06b6d4','#ec4899','#14b8a6','#a855f7','#f97316','#84cc16','#6366f1','#e11d48','#0ea5e9','#22c55e'];
+ const table=(list)=>{const total=list.reduce((s,x)=>s+x.value,0);return `<table class="share-table"><thead><tr><th>Categoria</th><th>Volume</th><th>Share</th></tr></thead><tbody>${list.map((x,i)=>`<tr><td><span class="share-swatch" style="background:${colors[i%colors.length]}"></span><strong>${esc(x.cat)}</strong></td><td class="num">${fmtInt(x.value)} kg</td><td class="num">${total?((x.value/total)*100).toFixed(1):'0.0'}%</td></tr>`).join('')||'<tr><td colspan="3">Sem volume no período.</td></tr>'}</tbody></table>`};
+ return `<section class="panel bi-section" id="shareCategoriasFinal"><div class="section-head"><div><h3>Share de volume por categoria</h3><p>Participação percentual de cada categoria calculada sobre o volume total de cada período.</p></div></div><div class="share-final-grid"><div class="share-final-card"><h4>${esc(model.previousPeriodsLabel)}</h4><p>Distribuição do volume do ano/período anterior.</p><div class="share-pie-wrap"><canvas id="sharePiePrev"></canvas></div>${table(model.previousShare)}</div><div class="share-final-card"><h4>${esc(model.currentPeriodsLabel)}</h4><p>Distribuição do volume do ano/período atual.</p><div class="share-pie-wrap"><canvas id="sharePieCurrent"></canvas></div>${table(model.currentShare)}</div></div></section>`;
+}
+function renderShareFinalCharts(model){
+ const colors=['#2563eb','#10b981','#f59e0b','#8b5cf6','#ef4444','#06b6d4','#ec4899','#14b8a6','#a855f7','#f97316','#84cc16','#6366f1','#e11d48','#0ea5e9','#22c55e'];
+ function draw(id,key,list){
+  const c=document.getElementById(id); if(!c) return;
+  if(STATE.charts[key]) STATE.charts[key].destroy();
+  const total=list.reduce((sum,x)=>sum+x.value,0);
+  const bg=list.map((_,i)=>colors[i%colors.length]);
+  STATE.charts[key]=new Chart(c,{
+   type:'pie',
+   data:{labels:list.map(x=>x.cat),datasets:[{data:list.map(x=>x.value),backgroundColor:bg,borderColor:'#fff',borderWidth:2}]},
+   options:{responsive:true,maintainAspectRatio:false,plugins:{
+    legend:{position:'right',labels:{boxWidth:12,font:{size:10},generateLabels:function(chart){return chart.data.labels.map(function(label,i){const v=Number(chart.data.datasets[0].data[i]||0);return {text:label+' • '+(total?(v/total*100).toFixed(1):'0.0')+'%',fillStyle:bg[i],strokeStyle:'#fff',lineWidth:1,index:i};});}}},
+    tooltip:{callbacks:{label:function(ctx){const v=Number(ctx.raw||0);return ctx.label+': '+fmtInt(v)+' kg • '+(total?(v/total*100).toFixed(1):'0.0')+'%';}}}
+   }}
+  });
+ }
+ draw('sharePiePrev','shareFinalPrev',model.previousShare);
+ draw('sharePieCurrent','shareFinalCurrent',model.currentShare);
+}
+function strategicBadge(value, goodIfPositive=true){
+ const ok=value!=null && (goodIfPositive?value>=0:value<=0);
+ return `<span class="strategy-badge ${value==null?'neutral':ok?'good':'bad'}">${value==null?'Sem comparação':fmtPct(value,true)}</span>`;
+}
+function strategicAction(x){
+ if(x.noBuy) return {label:'Reativar agora',cls:'critical',why:'Cliente zerou após comprar nos meses anteriores'};
+ if(x.varVol!=null && x.varVol<=-25) return {label:'Plano de recuperação',cls:'critical',why:`Volume caiu ${Math.abs(x.varVol).toFixed(0)}% vs média 2M`};
+ if(x.varFat!=null && x.varFat<=-10) return {label:'Revisar mix e preço',cls:'attention',why:`Faturamento caiu ${Math.abs(x.varFat).toFixed(0)}% vs média 2M`};
+ if(x.newClient) return {label:'Acelerar recorrência',cls:'opportunity',why:'Cliente novo, ainda sem histórico recorrente'};
+ return {label:'Expandir carteira',cls:'opportunity',why:'Potencial acima do realizado atual'};
+}
+function strategicCategoryTargets(rows,model){
+ const selected=activeFilters().periods.slice().sort((a,b)=>a-b);
+ const currentPeriods=new Set(selected.filter(x=>Math.floor(x/100)===model.currentYear));
+ const out=new Map();
+ rows.forEach(r=>{const ym=getYM(r);if(!currentPeriods.has(ym))return;const name=String(rowVal(r,['CATEGORIA','Categoria'],'Sem categoria')).trim()||'Sem categoria';let x=out.get(name);if(!x){x={volMeta:0,fatMeta:0};out.set(name,x)}x.volMeta+=num(rowVal(r,['VOL. META','VOL META','Vol. Meta'],0));x.fatMeta+=num(rowVal(r,['FAT. META','FAT META','Fat. Meta'],0));});
+ return out;
+}
+function strategicClientMonthlyMetrics(rows){
+ const clients=new Map();
+ (rows||[]).forEach(r=>{const ym=getYM(r);if(!ym)return;const code=String(rowVal(r,['CLIFOR','Clifor'],'—')).trim();const name=String(rowVal(r,['CLIENTE','Cliente'],'Sem nome')).trim();const key=code+'||'+name;let months=clients.get(key);if(!months){months=new Map();clients.set(key,months)}let v=months.get(ym);if(!v){v={fat:0,vol:0,fatMeta:0,volMeta:0};months.set(ym,v)}v.fat+=num(rowVal(r,['FATURAMENTO','Faturamento'],0));v.vol+=num(rowVal(r,['VOLUME','Volume'],0));v.fatMeta+=num(rowVal(r,['FAT. META','FAT META','Fat. Meta'],0));v.volMeta+=num(rowVal(r,['VOL. META','VOL META','Vol. Meta'],0));});
+ return clients;
+}
+function renderStrategicDashboard(b,t,pricePct,model,rows){
+ const clients=[...b.clients];
+ const active=clients.filter(x=>x.curFat>0);
+ const atRisk=clients.filter(x=>x.noBuy || (x.varFat!=null&&x.varFat<-10) || (x.varVol!=null&&x.varVol<-10));
+ const recoverable=atRisk.reduce((s,x)=>s+x.potFat,0);
+ const totalPotential=b.opp.reduce((s,x)=>s+x.potFat,0);
+ const top10Potential=[...b.opp].sort((a,z)=>z.potFat-a.potFat).slice(0,10).reduce((s,x)=>s+x.potFat,0);
+ const concentration=totalPotential?top10Potential/totalPotential*100:0;
+ const metaGap=Math.max(0,t.metaCurrent-t.volCurrent);
+ const clientGrowth=pctGrowth(t.currentClientsCount,t.previousClientsCount);
+ const fatDelta=t.fatCurrent-t.fatPrev;
+ const categoryTargets=strategicCategoryTargets(rows,model);
+ const allCategories=[...b.cats].map(x=>({...x,delta:x.curFat-x.prevFat})).sort((a,z)=>z.curFat-a.curFat);
+ const priorities=filterOpp([...b.opp]).sort((a,z)=>z.potFat-a.potFat).slice(0,15);
+ const clientMonthly=strategicClientMonthlyMetrics(rows);
+ const priorityRows=priorities.map((x,i)=>{const metricMonths=clientMonthly.get(x.key)||new Map();const monthKeys=[...new Set([...x.months.keys(),...metricMonths.keys()])].sort((a,z)=>a-z);const history=monthKeys.map(ym=>{const actual=x.months.get(ym)||{fat:0,vol:0};const m=metricMonths.get(ym)||{fat:actual.fat,vol:actual.vol,fatMeta:0,volMeta:0};const volPct=m.volMeta?m.vol/m.volMeta*100:null;const fatPct=m.fatMeta?m.fat/m.fatMeta*100:null;const priceReal=m.vol?m.fat/m.vol:null;const priceMeta=m.volMeta?m.fatMeta/m.volMeta:null;const priceVar=priceMeta&&priceReal!=null?pctGrowth(priceReal,priceMeta):null;const badge=v=>v==null?'neutral':v>=100?'good':v>=80?'attention':'bad';return `<tr class="priority-month-row"><td>${ymLabel(ym)}</td><td class="num">${fmtInt(m.volMeta)} kg</td><td class="num"><strong>${fmtInt(m.vol)} kg</strong></td><td class="num"><span class="history-pct ${badge(volPct)}">${volPct==null?'—':volPct.toFixed(1)+'%'}</span></td><td class="num">${fmtMon(m.fatMeta)}</td><td class="num"><strong>${fmtMon(m.fat)}</strong></td><td class="num"><span class="history-pct ${badge(fatPct)}">${fatPct==null?'—':fatPct.toFixed(1)+'%'}</span></td><td class="num">${priceMeta==null?'—':fmtMon(priceMeta)}</td><td class="num"><strong>${priceReal==null?'—':fmtMon(priceReal)}</strong></td><td class="num ${growthClass(priceVar)}">${fmtPct(priceVar,true)}</td><td class="num"><button type="button" class="cat-toggle" onclick="event.stopPropagation();toggleMonthCats(this)">Ver categorias</button></td></tr><tr class="month-cat-row"><td colspan="11"><div class="month-cat-box"><div class="month-cat-title">Categorias compradas em ${ymLabel(ym)}</div>${monthCategoryDetails(x.key,ym)}</div></td></tr>`}).join('');return `<article class="priority-client-card"><button type="button" class="priority-client-header" aria-expanded="false" onclick="event.stopPropagation();togglePriorityHistory(this)"><span class="priority-rank">${i+1}</span><span class="priority-client-info"><strong>${esc(x.name)}</strong><small>${esc(x.vend)} <i>•</i> ${esc(x.ger)}</small></span><span class="priority-open-label">Ver histórico</span><b class="priority-arrow">⌄</b></button><div class="priority-history-row"><div class="priority-history-box"><div class="priority-history-heading"><strong>Histórico mensal: meta x real</strong><span>${monthKeys.length} mês(es) com registro</span></div><div class="table-wrap priority-history-scroll"><table class="priority-history-table comparison-history-table"><thead><tr class="history-group-head"><th rowspan="2">Mês</th><th colspan="3">Volume</th><th colspan="3">Faturamento</th><th colspan="3">Preço médio</th><th rowspan="2">Categorias</th></tr><tr><th>Meta</th><th>Real</th><th>%</th><th>Meta</th><th>Real</th><th>%</th><th>Meta</th><th>Real</th><th>Var.</th></tr></thead><tbody>${history||'<tr><td colspan="11">Sem histórico mensal disponível.</td></tr>'}</tbody></table></div></div></div></article>`}).join('');
+ const categoryRows=(list)=>list.map(x=>{const m=categoryTargets.get(x.name)||{volMeta:0,fatMeta:0};const volPct=m.volMeta?x.curVol/m.volMeta*100:null;const fatPct=m.fatMeta?x.curFat/m.fatMeta*100:null;const statusPct=fatPct??volPct;const statusClass=statusPct==null?'neutral':statusPct>=100?'good':statusPct>=80?'attention':'bad';return `<tr><td class="left category-name-cell"><strong>${esc(x.name)}</strong></td><td class="num">${fmtInt(m.volMeta)} kg</td><td class="num"><strong>${fmtInt(x.curVol)} kg</strong></td><td class="num attainment-cell"><span class="attainment ${volPct==null?'neutral':volPct>=100?'good':volPct>=80?'attention':'bad'}">${volPct==null?'—':volPct.toFixed(1)+'%'}</span></td><td class="num">${fmtMon(m.fatMeta)}</td><td class="num"><strong>${fmtMon(x.curFat)}</strong></td><td class="num attainment-cell"><span class="attainment ${statusClass}">${fatPct==null?'—':fatPct.toFixed(1)+'%'}</span></td><td class="num">${x.curVol?fmtMon(x.curFat/x.curVol):'—'}</td><td class="num"><strong>${x.share.toFixed(1)}%</strong></td></tr>`}).join('');
+ const quadrants=[
+  {name:'Recuperar',cls:'q-red',list:clients.filter(x=>x.noBuy || (x.varFat!=null&&x.varFat<-10)),desc:'Queda ou ausência de compra'},
+  {name:'Expandir',cls:'q-blue',list:clients.filter(x=>x.curFat>0 && x.potFat>0 && !(x.varFat!=null&&x.varFat<-10)),desc:'Ativos com espaço adicional'},
+  {name:'Proteger',cls:'q-green',list:clients.filter(x=>x.curFat>0 && (x.varFat==null||x.varFat>=0)).sort((a,z)=>z.curFat-a.curFat).slice(0,Math.max(1,Math.ceil(active.length*.2))),desc:'Contas relevantes e saudáveis'},
+  {name:'Monitorar',cls:'q-gray',list:clients.filter(x=>x.curFat===0 && !x.noBuy),desc:'Sem tração suficiente na janela'}
+ ];
+ return `<div class="strategy-dashboard">
+
+  <section class="strategy-kpis">
+   <div class="strategy-kpi"><span>Faturamento atual</span><strong>${fmtMon(t.fatCurrent)}</strong>${strategicBadge(t.fatGrowthPct)}<small>Anterior: ${fmtMon(t.fatPrev)}</small></div>
+   <div class="strategy-kpi"><span>Volume atual</span><strong>${fmtInt(t.volCurrent)} kg</strong>${strategicBadge(t.volGrowthPct)}<small>Anterior: ${fmtInt(t.volPrev)} kg</small></div>
+   <div class="strategy-kpi"><span>Preço médio</span><strong>${fmtMon(t.priceAvgCurrent)}</strong>${strategicBadge(pricePct)}<small>Anterior: ${fmtMon(t.priceAvgPrev)}</small></div>
+   <div class="strategy-kpi"><span>Clientes ativos</span><strong>${fmtInt(t.currentClientsCount)}</strong>${strategicBadge(clientGrowth)}<small>Anterior: ${fmtInt(t.previousClientsCount)}</small></div>
+   <div class="strategy-kpi"><span>Atingimento da meta</span><strong>${t.currentMetaPct==null?'—':t.currentMetaPct.toFixed(1)+'%'}</strong><span class="strategy-badge ${t.currentMetaPct>=100?'good':t.currentMetaPct>=80?'attention':'bad'}">${metaGap>0?fmtInt(metaGap)+' kg de gap':'Meta atingida'}</span><small>Meta: ${fmtInt(t.metaCurrent)} kg</small></div>
+   <div class="strategy-kpi"><span>Potencial em risco</span><strong>${fmtMon(recoverable)}</strong><span class="strategy-badge bad">${atRisk.length} clientes</span><small>Estimado pela média dos 2 meses anteriores</small></div>
+  </section>
+  <section class="strategy-panel category-performance-panel"><div class="strategy-title"><div><span class="eyebrow">DESEMPENHO POR CATEGORIA</span><h3>Meta x Real</h3></div><p>Comparação de volume e faturamento, com percentual de atingimento.</p></div><div class="category-legend"><span><i class="legend-dot good"></i>100% ou mais</span><span><i class="legend-dot attention"></i>80% a 99,9%</span><span><i class="legend-dot bad"></i>Abaixo de 80%</span></div><div class="table-wrap category-performance-wrap"><table class="strategy-table category-performance-table"><thead><tr><th>Categoria</th><th>Meta volume</th><th>Volume real</th><th>% ating. volume</th><th>Meta faturamento</th><th>Faturamento real</th><th>% ating. fat.</th><th>Preço médio</th><th>Share</th></tr></thead><tbody>${categoryRows(allCategories)||'<tr><td colspan="9">Nenhuma categoria identificada no recorte.</td></tr>'}</tbody></table></div></section>
+  <details class="strategy-details"><summary>Explorar análises operacionais e tabelas detalhadas</summary><div class="details-body">${renderExecutiveDashboard(b,t,pricePct,model)}${renderShareFinal(model)}<div class="operational-extra-sections"><section class="strategy-panel priority-panel"><div class="strategy-title"><div><span class="eyebrow">PRIORIDADE DE EXECUÇÃO</span><h3>Top 15 clientes para ação</h3></div><p>Selecione um cliente para consultar a evolução mensal.</p></div><div class="table-wrap priority-wrap"><div class="priority-client-list">${priorityRows||'<div class="priority-empty">Sem oportunidades no recorte.</div>'}</div></div></section><section class="strategy-panel final-products-panel"><div class="strategy-title"><div><span class="eyebrow">PRODUTOS E ITENS</span><h3>Top produtos/itens</h3></div><p>Faturamento, volume, preço médio, participação e crescimento.</p></div><div class="table-wrap"><table class="strategy-table final-products-table"><thead><tr><th>Produto / descrição</th><th>Fat. atual</th><th>Fat. anterior</th><th>Vol. atual</th><th>Vol. anterior</th><th>Preço médio atual</th><th>Preço médio anterior</th><th>Share</th><th>Variação</th></tr></thead><tbody>${b.products.filter(x=>x.name!=='Sem produto').map((x,i)=>`<tr class="product-extra ${i>=10?'is-extra':''}"><td class="left"><strong>${esc(x.name)}</strong></td><td class="num">${fmtMon(x.curFat)}</td><td class="num">${fmtMon(x.prevFat)}</td><td class="num">${fmtInt(x.curVol)} kg</td><td class="num">${fmtInt(x.prevVol)} kg</td><td class="num">${x.curVol?fmtMon(x.curFat/x.curVol):'—'}</td><td class="num">${x.prevVol?fmtMon(x.prevFat/x.prevVol):'—'}</td><td class="num">${x.share.toFixed(1)}%</td><td class="num ${growthClass(x.growth)}">${fmtPct(x.growth,true)}</td></tr>`).join('')||'<tr><td colspan="9">Sem produto identificado.</td></tr>'}</tbody></table></div><div class="reading-more product-more"><button type="button" onclick="toggleProducts(this)">Ver mais produtos</button></div></section></div></div></details>
+ </div>`;
+}
+function renderBI(rows,model){const b=deriveBI(rows,model),t=model.totals,pricePct=t.priceAvgPrev?pctGrowth(t.priceAvgCurrent,t.priceAvgPrev):null;const html=renderStrategicDashboard(b,t,pricePct,model,rows);setTimeout(()=>{renderExecutiveCharts(model);renderShareFinalCharts(model)},80);return html;}
+function renderSellerView(b){const vend=selectedValues('f_vend');if(!vend.length)return '';const x=b.clients;return `<section class="panel bi-section"><div class="section-head"><div><h3>Visão do Vendedor</h3><p>${esc(vend.join(', '))}</p></div></div><div class="seller-view"><strong>${fmtMon(x.reduce((s,a)=>s+a.curFat,0))}</strong> faturamento • <strong>${fmtInt(x.reduce((s,a)=>s+a.curVol,0))} kg</strong> • ${x.filter(a=>a.health==='Em queda').length} em queda • ${x.filter(a=>a.noBuy).length} sem compra • ${x.filter(a=>a.newClient).length} novos • <strong>${fmtMon(x.reduce((s,a)=>s+a.potFat,0))}</strong> potencial de recuperação</div></section>`}
+function oppRows(list,limit=10){return list.slice(0,limit).map((x,i)=>`<tr class="clickable" data-client="${esc(x.key)}"><td>${i+1}</td><td><strong>${esc(x.name)}</strong></td><td>${esc(x.vend)}</td><td>${fmtMon(x.curFat)}</td><td>${fmtInt(x.curVol)}</td><td>${fmtMon(x.avgFat)}</td><td class="${growthClass(x.varVol)}">${fmtPct(x.varVol,true)}</td><td><strong>${fmtMon(x.potFat)}</strong></td><td><span class="opp-badge">${x.type}</span></td><td class="${x.potFat>=10000?'priority-high':'priority-mid'}">${x.potFat>=10000?'Alta':'Média'}</td></tr>`).join('')}
+function renderTopOpp(list,b){return `<section class="panel bi-section"><div class="section-head"><div><h3>Top 10 Oportunidades para Ação</h3><p>Ordenação objetiva por potencial financeiro perdido. Clique no cliente para abrir o detalhe.</p></div></div><div class="table-wrap"><table class="impact-table"><thead><tr><th>#</th><th>Cliente</th><th>Vendedor</th><th>Fat. atual</th><th>Volume</th><th>Média 2M</th><th>Var. volume</th><th>Potencial</th><th>Tipo</th><th>Prioridade</th></tr></thead><tbody>${oppRows(list)}</tbody></table></div><div class="commercial-note" style="margin-top:8px">Por que está aqui? Potencial = máx(0, média de faturamento dos 2 meses anteriores − faturamento atual). O ranking usa esse impacto financeiro em ordem decrescente.</div></section><section class="panel bi-section"><div class="section-head"><div><h3>Oportunidades com Maior Impacto</h3><p>Impacto financeiro e de volume, sem dados simulados</p></div></div><div class="table-wrap"><table class="impact-table"><thead><tr><th>#</th><th>Cliente</th><th>Vendedor</th><th>Fat. atual</th><th>Volume</th><th>Média 2M</th><th>Variação %</th><th>Potencial</th><th>Tipo</th><th>Prioridade</th></tr></thead><tbody>${oppRows(filterOpp(b.opp),50)}</tbody></table></div></section>`}
+function renderHealth(b){const total=b.clients.length||1;return `<section class="panel bi-section"><div class="section-head"><div><h3>Onde está o problema? • Saúde da Carteira</h3><p>Distribuição da carteira por situação. Clique para explorar os clientes</p></div></div><div class="health-grid">${b.health.map(h=>`<div class="health-card" data-health="${h.name}"><b>${h.count}</b><span>${h.name} • ${(h.count/total*100).toFixed(1)}%</span></div>`).join('')}</div></section>`}
+function renderMatrixAndPrice(b,t,pricePct){setTimeout(()=>drawBICharts(b),80);return `<section class="bi-grid2 bi-section"><div class="panel"><div class="section-head"><div><h3>Matriz de Oportunidade</h3><p>X = potencial financeiro • Y = variação de volume vs média 2M</p></div></div><div class="bi-chart"><canvas id="matrixChart"></canvas></div></div><div class="panel"><div class="section-head"><div><h3>Preço × Volume</h3><p>Comparação vs mesmo período do ano anterior</p></div></div><div class="kpi-grid" style="grid-template-columns:1fr 1fr">${biKpi('Preço atual',fmtMon(t.priceAvgCurrent),'anterior '+fmtMon(t.priceAvgPrev),pricePct)}${biKpi('Variação volume',fmtPct(t.volGrowthPct,true),'vs ano anterior',t.volGrowthPct)}</div><div class="exec-insight" style="margin-top:10px">${t.volGrowthPct!=null&&pricePct!=null?`Volume ${t.volGrowthPct>=0?'cresceu':'caiu'} ${Math.abs(t.volGrowthPct).toFixed(1)}%, enquanto preço médio ${pricePct>=0?'subiu':'caiu'} ${Math.abs(pricePct).toFixed(1)}%. ${t.volGrowthPct>0&&pricePct<0?'Isso pode indicar possível efeito de mix/preço e merece análise.':''}`:'Comparação indisponível para o recorte selecionado.'}</div></div></section>`}
+function drawBICharts(b){const c=document.getElementById('matrixChart');if(!c)return;if(STATE.charts.matrix)STATE.charts.matrix.destroy();const pts=b.clients.filter(x=>x.varVol!=null).map(x=>({x:x.potFat,y:x.varVol,client:x.name,vend:x.vend,fat:x.curFat,vol:x.curVol}));STATE.charts.matrix=new Chart(c,{type:'scatter',data:{datasets:[{label:'Clientes',data:pts,backgroundColor:pts.map(p=>p.y<0?'#dc2626':'#2563eb'),pointRadius:5}]},options:{maintainAspectRatio:false,plugins:{tooltip:{callbacks:{label:ctx=>{const p=ctx.raw;return [`${p.client} • ${p.vend}`,`Faturamento: ${fmtMon(p.fat)}`,`Volume: ${fmtInt(p.vol)} kg`,`Variação: ${p.y.toFixed(1)}%`,`Potencial: ${fmtMon(p.x)}`]}}}},scales:{x:{title:{display:true,text:'Potencial financeiro (R$)'}},y:{title:{display:true,text:'Variação de volume (%)'}}}}})}
+function renderCategoryBI(b){const cats=[...b.cats].sort((a,z)=>z.curFat-a.curFat);const max=Math.max(1,...cats.map(x=>x.curFat));return `<section class="panel bi-section"><div class="section-head"><div><h3>Onde está o problema? • Categorias</h3><p>Compare crescimento, participação e clientes em queda</p></div></div><div class="table-wrap"><table class="impact-table"><thead><tr><th>Categoria</th><th>Faturamento</th><th>Volume</th><th>Crescimento</th><th>Participação</th><th>Preço médio</th><th>Var. preço</th><th>Positivados</th><th>Em queda</th></tr></thead><tbody>${cats.map(c=>`<tr><td><strong>${esc(c.name)}</strong><div class="mini-bar"><span style="width:${c.curFat/max*100}%"></span></div></td><td>${fmtMon(c.curFat)}</td><td>${fmtInt(c.curVol)}</td><td class="${growthClass(c.growth)}">${fmtPct(c.growth,true)}</td><td>${c.share.toFixed(1)}%</td><td>${fmtMon(c.price)}</td><td>${fmtPct(c.prevPrice?pctGrowth(c.price,c.prevPrice):null,true)}</td><td>${c.clients.size}</td><td>${c.falling.size}</td></tr>`).join('')}</tbody></table></div><div class="commercial-note" style="margin-top:8px">Categorias que mais cresceram: ${[...cats].filter(c=>c.growth!=null).sort((a,z)=>z.growth-a.growth).slice(0,3).map(c=>`${esc(c.name)} (${fmtPct(c.growth,true)})`).join(' • ')||'sem comparação'}<br>Categorias que mais perderam volume: ${[...cats].filter(c=>c.growth<0).sort((a,z)=>a.growth-z.growth).slice(0,3).map(c=>`${esc(c.name)} (${fmtPct(c.growth,true)})`).join(' • ')||'nenhuma no recorte'}</div></section>`}
+function renderRisk(b){return `<section class="panel bi-section"><div class="section-head"><div><h3>Clientes em Risco</h3><p>Sem compra ou queda relevante vs média dos 2 meses anteriores</p></div></div><div class="table-wrap"><table class="impact-table"><thead><tr><th>Cliente</th><th>Vendedor</th><th>Última compra</th><th>Média 2M</th><th>Fat. atual</th><th>Queda %</th><th>Potencial</th><th>Categoria afetada</th></tr></thead><tbody>${b.risk.slice(0,50).map(x=>`<tr class="clickable" data-client="${esc(x.key)}"><td>${esc(x.name)}</td><td>${esc(x.vend)}</td><td>${lastPurchase(x)}</td><td>${fmtMon(x.m1Fat)}</td><td>${fmtMon(x.avgFat)}</td><td>${fmtMon(x.curFat)}</td><td class="grow-neg">${fmtPct(x.varFat,true)}</td><td><strong>${fmtMon(x.potFat)}</strong></td><td>${esc([...x.catsHist].slice(0,2).join(', ')||'—')}</td></tr>`).join('')}</tbody></table></div><div class="metric-na" style="margin-top:8px">Queda de frequência depende de campo de pedido/data transacional. Redução de mix é sinalizada apenas quando a base mensal permite observar categorias compradas.</div></section>`}
+function lastPurchase(x){const a=[...x.months.entries()].filter(([,v])=>v.fat>0||v.vol>0).sort((a,b)=>b[0]-a[0]);return a.length?ymLabel(a[0][0]):'—'}
+function renderCrossSell(b){return `<section class="panel bi-section"><div class="section-head"><div><h3>Positivação e Cross-sell</h3><p>Somente sinais sustentados pela base disponível</p></div></div><div class="kpi-grid">${biKpi('Positivados',fmtInt(b.clients.filter(x=>x.curFat>0).length),'faturamento atual > 0',null)}${biKpi('Não positivados',fmtInt(b.clients.filter(x=>x.curFat===0).length),'com histórico na janela',null)}${biKpi('Novos',fmtInt(b.clients.filter(x=>x.newClient).length),'sem compra nos 2 meses anteriores',null)}${biKpi('Recuperados',fmtInt(b.clients.filter(x=>x.recovered).length),'retorno após mês sem compra',null)}</div><div class="metric-na" style="margin-top:10px">Cross-sell estimado em R$ requer uma regra de potencial por categoria. A base permite identificar categorias ausentes, mas não é criado potencial financeiro fictício sem uma regra de negócio definida.</div></section>`}
+function renderUnavailable(){return `<section class="panel bi-section"><div class="section-head"><div><h3>Disponibilidade das Métricas</h3><p>Transparência das regras de negócio</p></div></div><div class="metric-na"><strong>Disponíveis:</strong> faturamento, volume, preço médio, comparações anuais, média 2M, potencial de recuperação, saúde da carteira e risco por queda/sem compra.<br><strong>Dependem de novos campos ou regra:</strong> frequência de pedidos (data/ID de pedido), margem (custo/margem), última compra em nível diário (data da transação) e valor financeiro de cross-sell (regra de potencial por categoria). Nenhum valor é simulado.</div></section>`}
+
+function clientCategoryMonthly(key){const [code,name]=key.split('||');const rows=baseFilteredRows().filter(r=>String(r.CLIFOR||r.Clifor||'').trim()===code&&String(r.CLIENTE||r.Cliente||'').trim()===name), out=new Map();rows.forEach(r=>{const ym=getYM(r);if(!ym)return;const cat=String(r.CATEGORIA||r.Categoria||'Sem categoria').trim(),fat=num(r.FATURAMENTO||r.Faturamento||0),vol=num(r.VOLUME||r.Volume||0),fatMeta=num(rowVal(r,['FAT. META','FAT META','Fat. Meta'],0)),volMeta=num(rowVal(r,['VOL. META','VOL META','Vol. Meta'],0));if(!out.has(ym))out.set(ym,new Map());const m=out.get(ym),v=m.get(cat)||{fat:0,vol:0,fatMeta:0,volMeta:0};v.fat+=fat;v.vol+=vol;v.fatMeta+=fatMeta;v.volMeta+=volMeta;m.set(cat,v)});return out;}
+function categoryStatusData(key,anchor){const monthly=clientCategoryMonthly(key),cur=monthly.get(anchor)||new Map(),m1=monthly.get(prevYM(anchor,1))||new Map(),m2=monthly.get(prevYM(anchor,2))||new Map(),cats=new Set([...cur.keys(),...m1.keys(),...m2.keys()]);return [...cats].map(cat=>{const c=cur.get(cat)||{fat:0,vol:0},a=m1.get(cat)||{fat:0,vol:0},b=m2.get(cat)||{fat:0,vol:0},avgVol=(a.vol+b.vol)/2,avgFat=(a.fat+b.fat)/2,vr=avgVol>0?(c.vol-avgVol)/avgVol*100:null;let status='ESTÁVEL',cls='cat-stable';if(c.vol===0&&avgVol>0){status='PAROU DE COMPRAR';cls='cat-stop'}else if(vr!=null&&vr<-10){status='REDUZIU VOLUME';cls='cat-down'}else if(vr!=null&&vr>10){status='CRESCEU';cls='cat-up'}return {cat,curVol:c.vol,curFat:c.fat,avgVol,avgFat,vr,status,cls}}).sort((a,b)=>a.status==='PAROU DE COMPRAR'?-1:b.status==='PAROU DE COMPRAR'?1:(a.vr??0)-(b.vr??0));}
+function monthCategoryDetails(key,ym){const m=clientCategoryMonthly(key).get(ym)||new Map();const rows=[...m.entries()].sort((a,b)=>b[1].fat-a[1].fat);if(!rows.length)return '<div class="metric-na">Sem compras registradas neste mês.</div>';const badge=v=>v==null?'neutral':v>=100?'good':v>=80?'attention':'bad';return `<div class="category-comparison-scroll"><table class="month-cat-table category-comparison-table"><thead><tr class="category-group-head"><th rowspan="2">Categoria</th><th colspan="3">Volume</th><th colspan="3">Faturamento</th><th colspan="3">Preço médio</th></tr><tr><th>Meta</th><th>Real</th><th>%</th><th>Meta</th><th>Real</th><th>%</th><th>Meta</th><th>Real</th><th>Var.</th></tr></thead><tbody>${rows.map(([cat,v])=>{const volPct=v.volMeta?v.vol/v.volMeta*100:null;const fatPct=v.fatMeta?v.fat/v.fatMeta*100:null;const priceMeta=v.volMeta?v.fatMeta/v.volMeta:null;const priceReal=v.vol?v.fat/v.vol:null;const priceVar=priceMeta&&priceReal!=null?pctGrowth(priceReal,priceMeta):null;return `<tr><td><strong>${esc(cat)}</strong></td><td>${fmtInt(v.volMeta)} kg</td><td><strong>${fmtInt(v.vol)} kg</strong></td><td><span class="history-pct ${badge(volPct)}">${volPct==null?'—':volPct.toFixed(1)+'%'}</span></td><td>${fmtMon(v.fatMeta)}</td><td><strong>${fmtMon(v.fat)}</strong></td><td><span class="history-pct ${badge(fatPct)}">${fatPct==null?'—':fatPct.toFixed(1)+'%'}</span></td><td>${priceMeta==null?'—':fmtMon(priceMeta)}</td><td><strong>${priceReal==null?'—':fmtMon(priceReal)}</strong></td><td class="${growthClass(priceVar)}">${fmtPct(priceVar,true)}</td></tr>`}).join('')}</tbody></table></div>`;}
+function togglePriorityHistory(btn){const card=btn.closest('.priority-client-card'),detail=card?.querySelector('.priority-history-row');if(!detail)return;const open=detail.classList.toggle('open');card.classList.toggle('open',open);btn.setAttribute('aria-expanded',open?'true':'false');const label=btn.querySelector('.priority-open-label');if(label)label.textContent=open?'Ocultar histórico':'Ver histórico';const arrow=btn.querySelector('.priority-arrow');if(arrow)arrow.textContent=open?'⌃':'⌄';if(!open)card.querySelectorAll('.month-cat-row.open').forEach(r=>r.classList.remove('open'));}
+function toggleMonthCats(btn){const row=btn.closest('tr').nextElementSibling;row?.classList.toggle('open');btn.textContent=row?.classList.contains('open')?'Ocultar categorias':'Ver categorias';}
+function openClientDetail(key){const rows=baseFilteredRows(),m=buildAnalysisModel(rows),b=deriveBI(rows,m),x=b.clients.find(c=>c.key===key);if(!x)return;let modal=document.getElementById('clientModal');if(!modal){modal=document.createElement('div');modal.id='clientModal';modal.className='modal';document.body.appendChild(modal)}const months=[...x.months.entries()].sort((a,z)=>a[0]-z[0]),statuses=categoryStatusData(key,b.anchor),stopped=statuses.filter(c=>c.status==='PAROU DE COMPRAR'),reduced=statuses.filter(c=>c.status==='REDUZIU VOLUME');modal.innerHTML=`<div class="modal-card"><div class="modal-head"><div><h2 style="margin:0">${esc(x.name)}</h2><div class="client-sub">${esc(x.code)} • ${esc(x.vend)} • ${esc(x.ger)}</div></div><button class="modal-close">×</button></div><div class="kpi-grid" style="margin-top:12px">${biKpi('Faturamento',fmtMon(x.curFat),'período atual',x.varFat)}${biKpi('Volume',fmtInt(x.curVol)+' kg','período atual',x.varVol)}${biKpi('Preço médio',x.curVol?fmtMon(x.curFat/x.curVol):'—','faturamento ÷ volume',null)}${biKpi('Potencial',fmtMon(x.potFat),'média 2M − atual',null)}</div><section class="bi-section"><h3>Leitura do Cliente</h3><div class="exec-insight">${x.varVol!=null?`Cliente apresentou ${x.varVol<0?'queda':'variação positiva'} de ${Math.abs(x.varVol).toFixed(1)}% no volume em relação à média dos últimos 2 meses. `:''}Potencial estimado de recuperação: <strong>${fmtMon(x.potFat)}</strong>.</div><div class="category-alerts"><div class="category-alert"><h4 class="cat-stop">Categorias que parou de comprar</h4>${stopped.length?`<ul>${stopped.map(c=>`<li><strong>${esc(c.cat)}</strong> • média 2M ${fmtInt(c.avgVol)} kg • ${fmtMon(c.avgFat)}</li>`).join('')}</ul>`:'<div class="event-sub">Nenhuma identificada pela regra atual.</div>'}</div><div class="category-alert"><h4 class="cat-down">Categorias com redução de volume</h4>${reduced.length?`<ul>${reduced.map(c=>`<li><strong>${esc(c.cat)}</strong> • ${fmtPct(c.vr,true)} vs média 2M • atual ${fmtInt(c.curVol)} kg</li>`).join('')}</ul>`:'<div class="event-sub">Nenhuma identificada pela regra atual.</div>'}</div></div></section><section class="bi-section"><h3>Histórico mensal</h3><div class="table-wrap"><table class="impact-table"><thead><tr><th>Mês</th><th>Faturamento</th><th>Volume</th><th>Categorias</th></tr></thead><tbody>${months.map(([ym,v])=>`<tr><td>${ymLabel(ym)}</td><td>${fmtMon(v.fat)}</td><td>${fmtInt(v.vol)}</td><td><button class="cat-toggle" onclick="toggleMonthCats(this)">Ver categorias</button></td></tr><tr class="month-cat-row"><td colspan="4"><div class="month-cat-box"><div class="month-cat-title">Categorias compradas em ${ymLabel(ym)}</div>${monthCategoryDetails(key,ym)}</div></td></tr>`).join('')}</tbody></table></div></section><section class="bi-section"><h3>Diagnóstico por Categoria • período atual vs média 2M</h3><div class="table-wrap"><table class="month-cat-table"><thead><tr><th>Categoria</th><th>Fat. atual</th><th>Volume atual</th><th>Média vol. 2M</th><th>Variação</th><th>Situação</th></tr></thead><tbody>${statuses.map(c=>`<tr><td><strong>${esc(c.cat)}</strong></td><td>${fmtMon(c.curFat)}</td><td>${fmtInt(c.curVol)} kg</td><td>${fmtInt(c.avgVol)} kg</td><td>${fmtPct(c.vr,true)}</td><td class="cat-status ${c.cls}">${c.status}</td></tr>`).join('')}</tbody></table></div></section></div>`;modal.classList.add('open');modal.querySelector('.modal-close').onclick=()=>modal.classList.remove('open');modal.onclick=e=>{if(e.target===modal)modal.classList.remove('open')}}
+function bindBIInteractions(){document.querySelectorAll('[data-client]').forEach(el=>el.onclick=()=>openClientDetail(el.dataset.client));document.querySelectorAll('[data-health]').forEach(el=>el.onclick=()=>{const health=el.dataset.health;document.querySelectorAll('[data-client]').forEach(r=>{const key=r.dataset.client;const rows=baseFilteredRows(),m=buildAnalysisModel(rows),b=deriveBI(rows,m),x=b.clients.find(c=>c.key===key);r.style.display=x&&x.health===health?'':'none'})})}
+function snapshotSelections(){const ids=['f_ger','f_coord','f_vend','f_cat','f_cli','f_uf','f_seg'];const o={};ids.forEach(id=>o[id]=selectedValues(id));return o;}
+function setFilterOptions(id,values,labels,selected){const el=document.getElementById(id);if(!el)return;const keep=new Set(selected||[]);el.innerHTML='<option value="">Todos</option>';values.forEach((v,i)=>{const o=document.createElement('option');o.value=v;o.textContent=labels?labels[i]:v;o.selected=keep.has(v);el.appendChild(o)});if(!Array.from(el.selectedOptions).some(o=>o.value))el.options[0].selected=true;}
+function cascadeRows(skipId,sel){const defs={f_ger:['GERENTE','Gerente'],f_coord:['COORDENADOR','Coordenador'],f_vend:['VENDEDOR','Vendedor'],f_cat:['CATEGORIA','Categoria'],f_uf:['UF','Uf'],f_seg:['SEGMENTO','Segmento']};return STATE.raw.filter(r=>{for(const [id,n] of Object.entries(defs)){if(id===skipId)continue;const a=sel[id]||[];if(a.length&&!a.includes(String(r[n[0]]||r[n[1]]||'').trim()))return false}if(skipId!=='f_cli'&&sel.f_cli?.length){const k=`${String(r.CLIFOR||r.Clifor||'').trim()}||${String(r.CLIENTE||r.Cliente||'').trim()}`;if(!sel.f_cli.includes(k))return false}return true})}
+function refreshCascadingFilters(){const sel=snapshotSelections(),defs={f_ger:['GERENTE','Gerente'],f_coord:['COORDENADOR','Coordenador'],f_vend:['VENDEDOR','Vendedor'],f_cat:['CATEGORIA','Categoria'],f_uf:['UF','Uf'],f_seg:['SEGMENTO','Segmento']};Object.entries(defs).forEach(([id,n])=>{const vals=uniqSorted(cascadeRows(id,sel).map(r=>String(r[n[0]]||r[n[1]]||'').trim()));setFilterOptions(id,vals,null,sel[id])});const mp=new Map();cascadeRows('f_cli',sel).forEach(r=>{const c=String(r.CLIENTE||r.Cliente||'').trim(),code=String(r.CLIFOR||r.Clifor||'').trim(),k=`${code}||${c}`;if(c||code)mp.set(k,`${code||'—'} • ${c||'Sem nome'}`)});const vals=[...mp.keys()].sort((a,b)=>cmpStr(mp.get(a),mp.get(b)));setFilterOptions('f_cli',vals,vals.map(v=>mp.get(v)),sel.f_cli)}
+function normalizeFilterChoice(id){const el=document.getElementById(id);if(!el)return;const hasReal=Array.from(el.selectedOptions).some(o=>o.value);if(hasReal&&el.options[0]?.value==='')el.options[0].selected=false;if(!Array.from(el.selectedOptions).some(o=>o.value)&&el.options[0])el.options[0].selected=true;}
+function applyAllFilters(id){if(id&&id!=='f_opp')normalizeFilterChoice(id);STATE.sync?.saveToStorage();render();}
+function render(){ const rows=baseFilteredRows(); const model=buildAnalysisModel(rows); const area=document.getElementById('contentArea'); if(!area) return; renderFilterSummary(); area.innerHTML=renderBI(rows,model); setTimeout(bindBIInteractions,120); }
+async function load(){ try { const r=await fetch('BASE_CLIENTES_Planilha6_LONGO.xlsx?v='+Date.now()); if(!r.ok) throw new Error('base externa indisponível'); const buf=await r.arrayBuffer(); const wb=XLSX.read(buf,{type:'array'}); const raw=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''}); STATE.raw=raw; STATE.maxYear=raw.length?Math.max(...raw.map(getYear)):null; STATE.availablePeriods=[...new Set(raw.map(getYM).filter(Boolean))].sort((a,b)=>a-b); const getC=name=>uniqSorted(raw.map(r=>r[name]||r[name.toLowerCase()]||r[name.toUpperCase()]||'')); fillSelect('f_ger', getC('GERENTE')); fillSelect('f_coord', getC('COORDENADOR')); fillSelect('f_vend', getC('VENDEDOR')); fillSelect('f_cat', getC('CATEGORIA')); fillSelect('f_uf', getC('UF')); fillSelect('f_seg', getC('SEGMENTO')); fillClientSelect(); fillPeriodMulti(STATE.availablePeriods); STATE.sync=STATE.sync||pfvBindFilterSync(['f_ger','f_coord','f_vend','f_cat','f_cli','f_cli_search','f_uf','f_seg','f_mes_ref','f_opp']); STATE.sync.applyFromStorage(); normalizePeriodSelection(); refreshCascadingFilters(); rebuildAllMultiFilters(); render(); } catch(err){ console.error(err); const area=document.getElementById('contentArea'); if(area) area.innerHTML='<div class="empty-state">⚠️ Não foi possível carregar a base de dados. Verifique se o navegador permite arquivos locais ou abra o HTML em um servidor local.</div>'; } }
+
+function multiFilterLabel(el){
+  const vals=Array.from(el.selectedOptions).filter(o=>o.value&&o.value!=='__ALL__');
+  if(!vals.length) return el.id==='f_mes_ref'?'Todos os meses':'Todos';
+  if(vals.length===1) return vals[0].textContent.trim();
+  return `${vals.length} selecionados`;
+}
+function syncMultiFilterUI(el){
+  const box=el.closest('.multi-filter'); if(!box)return;
+  const text=box.querySelector('.mf-text'); if(text)text.textContent=multiFilterLabel(el);
+  box.querySelectorAll('.mf-option').forEach(row=>{const o=Array.from(el.options).find(x=>x.value===row.dataset.value);const c=row.querySelector('input');if(c&&o)c.checked=o.selected;});
+}
+function rebuildMultiFilter(el){
+  if(!el || !el.multiple)return;
+  let box=el.closest('.multi-filter');
+  if(!box){box=document.createElement('div');box.className='multi-filter';el.parentNode.insertBefore(box,el);box.appendChild(el);el.classList.add('multi-filter-select');box.insertAdjacentHTML('beforeend','<button type="button" class="multi-filter-button"><span class="mf-text">Todos</span><span class="mf-caret">⌄</span></button><div class="multi-filter-menu"></div>');
+    const btn=box.querySelector('.multi-filter-button'),menu=box.querySelector('.multi-filter-menu');btn.addEventListener('click',e=>{e.stopPropagation();document.querySelectorAll('.multi-filter-menu.open').forEach(m=>{if(m!==menu){m.classList.remove('open');m.previousElementSibling?.classList.remove('open')}});menu.classList.toggle('open');btn.classList.toggle('open',menu.classList.contains('open'));});
+  }
+  const menu=box.querySelector('.multi-filter-menu');menu.onclick=e=>e.stopPropagation();menu.innerHTML='';
+  Array.from(el.options).forEach((o,idx)=>{const row=document.createElement('div');row.className='mf-option';row.dataset.value=o.value;row.innerHTML=`<span>${esc(o.textContent)}</span><input class="mf-check" type="checkbox" ${o.selected?'checked':''}>`;row.addEventListener('click',e=>{e.preventDefault();const isAll=o.value===''||o.value==='__ALL__';if(isAll){Array.from(el.options).forEach(x=>x.selected=false);o.selected=true;}else{o.selected=!o.selected;const all=Array.from(el.options).find(x=>x.value===''||x.value==='__ALL__');if(all)all.selected=false;if(!Array.from(el.options).some(x=>x.selected&&x.value&&x.value!=='__ALL__')&&all)all.selected=true;}el.dispatchEvent(new Event('change',{bubbles:true}));syncMultiFilterUI(el);});menu.appendChild(row);});
+  syncMultiFilterUI(el);
+}
+function rebuildAllMultiFilters(openFilterId=null){['f_ger','f_coord','f_vend','f_cat','f_mes_ref','f_cli','f_uf','f_seg','f_opp'].forEach(id=>rebuildMultiFilter(document.getElementById(id)));if(openFilterId){const el=document.getElementById(openFilterId),box=el?.closest('.multi-filter'),menu=box?.querySelector('.multi-filter-menu'),btn=box?.querySelector('.multi-filter-button');if(menu&&btn){document.querySelectorAll('.multi-filter-menu.open').forEach(m=>{if(m!==menu){m.classList.remove('open');m.previousElementSibling?.classList.remove('open')}});menu.classList.add('open');btn.classList.add('open');}}}
+document.addEventListener('click',()=>document.querySelectorAll('.multi-filter-menu.open').forEach(m=>{m.classList.remove('open');m.previousElementSibling?.classList.remove('open');refreshCascadingFilters();rebuildAllMultiFilters();}));
+function toggleProducts(btn){const rows=btn.closest('.dimension-card')?.querySelectorAll('.product-extra.is-extra')||[];const open=[...rows].some(r=>r.style.display==='table-row');rows.forEach(r=>r.style.display=open?'none':'table-row');btn.textContent=open?'Ver mais produtos':'Recolher produtos';}
+
+function restoreFullFilterOptionsFast(){
+ const buckets={f_ger:new Set(),f_coord:new Set(),f_vend:new Set(),f_cat:new Set(),f_uf:new Set(),f_seg:new Set()},clients=new Map();
+ (STATE.raw||[]).forEach(r=>{const add=(id,keys)=>{const v=String(rowVal(r,keys,'')).trim();if(v)buckets[id].add(v)};add('f_ger',['GERENTE','Gerente']);add('f_coord',['COORDENADOR','Coordenador']);add('f_vend',['VENDEDOR','Vendedor']);add('f_cat',['CATEGORIA','Categoria']);add('f_uf',['UF','Uf']);add('f_seg',['SEGMENTO','Segmento']);const c=String(rowVal(r,['CLIENTE','Cliente'],'')).trim(),code=String(rowVal(r,['CLIFOR','Clifor'],'')).trim();if(c||code)clients.set(`${code}||${c}`,`${code||'—'} • ${c||'Sem nome'}`)});
+ Object.entries(buckets).forEach(([id,set])=>setFilterOptions(id,uniqSorted([...set]),null,[]));
+ const clientValues=[...clients.keys()].sort((a,b)=>cmpStr(clients.get(a),clients.get(b)));setFilterOptions('f_cli',clientValues,clientValues.map(v=>clients.get(v)),[]);
+}
+function clearAllFiltersFast(){
+ const btn=document.getElementById('btnLimpar');if(!btn||btn.dataset.busy==='1')return;btn.dataset.busy='1';btn.disabled=true;const original=btn.textContent;btn.textContent='Limpando...';
+ requestAnimationFrame(()=>{try{
+  restoreFullFilterOptionsFast();
+  const opp=document.getElementById('f_opp');if(opp)Array.from(opp.options).forEach((o,i)=>o.selected=i===0);
+  const cs=document.getElementById('f_cli_search');if(cs)cs.value='';
+  const pm=document.getElementById('f_mes_ref');if(pm)Array.from(pm.options).forEach(o=>o.selected=o.value==='__ALL__');
+  normalizePeriodSelection();rebuildAllMultiFilters();STATE.sync?.saveToStorage();render();
+ }finally{requestAnimationFrame(()=>{btn.disabled=false;btn.dataset.busy='0';btn.textContent='Filtros limpos';setTimeout(()=>{btn.textContent=original},900)})}});
+}
+
+(function bind(){ document.getElementById('navToggle')?.addEventListener('click',()=>document.getElementById('navbar')?.classList.toggle('active')); document.getElementById('btnToggleFiltros')?.addEventListener('click',()=>{const box=document.getElementById('filtrosBox');const collapsed=box.classList.toggle('collapsed');document.getElementById('btnToggleFiltros').innerHTML=collapsed?'Mais filtros':'Ocultar'}); document.getElementById('btnLimpar')?.addEventListener('click',clearAllFiltersFast); document.getElementById('btnReload')?.addEventListener('click',load); ['f_ger','f_coord','f_vend','f_cat','f_cli','f_uf','f_seg','f_opp'].forEach(id=>document.getElementById(id)?.addEventListener('change',debounce(()=>applyAllFilters(id),100))); document.getElementById('f_cli_search')?.addEventListener('input',debounce(()=>{STATE.sync?.saveToStorage();render()},180)); document.getElementById('f_mes_ref')?.addEventListener('change',()=>{normalizePeriodSelection();STATE.sync?.saveToStorage();render()});})();
+load();
+</script>
+
+<style>
+/* Ajustes pontuais solicitados */
+.simple-opp td:nth-child(2),.simple-opp th:nth-child(2),.impact-table:has(.simple-opp) th:nth-child(2){text-align:left!important}
+</style>
+
+<style>
+/* Ajuste pontual: alinhamento Cliente / vendedor no Top 10 para Ação */
+.top10-action-table th:nth-child(2),
+.top10-action-table td:nth-child(2){text-align:left!important;}
+</style>
+</body>
+</html>
+<style>
+/* Ajuste solicitado: somente alinhamento dos dados das tabelas */
+.tbl th:first-child,.tbl td:first-child,
+.performance-table th:first-child,.performance-table td:first-child,
+.commercial-table th:first-child,.commercial-table td:first-child,
+.impact-table th:first-child,.impact-table td:first-child,
+.reading-table th:first-child,.reading-table td:first-child,
+.exec-table th:first-child,.exec-table td:first-child,
+.dimension-table th:first-child,.dimension-table td:first-child,
+.month-cat-table th:first-child,.month-cat-table td:first-child,
+.mini-table th:first-child,.mini-table td:first-child,
+.share-table th:first-child,.share-table td:first-child{text-align:left!important}
+
+.tbl th:not(:first-child),.tbl td:not(:first-child),
+.performance-table th:not(:first-child),.performance-table td:not(:first-child),
+.commercial-table th:not(:first-child),.commercial-table td:not(:first-child),
+.impact-table th:not(:first-child),.impact-table td:not(:first-child),
+.reading-table th:not(:first-child),.reading-table td:not(:first-child),
+.exec-table th:not(:first-child),.exec-table td:not(:first-child),
+.dimension-table th:not(:first-child),.dimension-table td:not(:first-child),
+.month-cat-table th:not(:first-child),.month-cat-table td:not(:first-child),
+.mini-table th:not(:first-child),.mini-table td:not(:first-child),
+.share-table th:not(:first-child),.share-table td:not(:first-child){text-align:right!important;font-variant-numeric:tabular-nums}
+
+.performance-table th.status-cell,.performance-table td.status-cell{text-align:center!important}
+</style>
+<style>
+/* Ajuste solicitado: somente destaque visual das tabelas */
+.tbl,.performance-table,.commercial-table,.impact-table,.reading-table,.exec-table,.dimension-table,.month-cat-table,.mini-table,.share-table{
+  border:1px solid #cbd5e1!important;
+  border-radius:9px;
+  overflow:hidden;
+  box-shadow:0 3px 10px rgba(15,23,42,.07);
+}
+.tbl thead th,.performance-table thead th,.commercial-table thead th,.impact-table thead th,.reading-table thead th,.exec-table thead th,.dimension-table thead th,.month-cat-table thead th,.mini-table thead th,.share-table thead th{
+  background:#dbeafe!important;
+  color:#1e3a5f!important;
+  border-bottom:2px solid #93c5fd!important;
+  font-weight:800!important;
+}
+.tbl tbody tr:nth-child(even),.performance-table tbody tr:nth-child(even),.commercial-table tbody tr:nth-child(even),.impact-table tbody tr:nth-child(even),.reading-table tbody tr:nth-child(even),.exec-table tbody tr:nth-child(even),.dimension-table tbody tr:nth-child(even),.month-cat-table tbody tr:nth-child(even),.mini-table tbody tr:nth-child(even),.share-table tbody tr:nth-child(even){background:#f8fbff!important}
+.tbl tbody tr:hover,.performance-table tbody tr:hover,.commercial-table tbody tr:hover,.impact-table tbody tr:hover,.reading-table tbody tr:hover,.exec-table tbody tr:hover,.dimension-table tbody tr:hover,.month-cat-table tbody tr:hover,.mini-table tbody tr:hover,.share-table tbody tr:hover{background:#eef6ff!important}
+.tbl td,.performance-table td,.commercial-table td,.impact-table td,.reading-table td,.exec-table td,.dimension-table td,.month-cat-table td,.mini-table td,.share-table td{border-bottom-color:#e2e8f0!important}
+</style>
+<script>
+/* Ajuste solicitado: remover somente a descricao de leitura comercial */
+document.addEventListener('DOMContentLoaded',function(){
+  document.querySelectorAll('h1,h2,h3,h4,p,div').forEach(function(el){
+    const t=(el.textContent||'').trim();
+    if(t==='Leitura comercial: o que mudou e onde agir' || t==='Comece pelo comparativo, confirme os clientes perdidos e termine nas categorias que sustentam ou limitam o resultado.') el.style.display='none';
+  });
+});
+</script>

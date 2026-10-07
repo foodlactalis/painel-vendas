@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang='pt-BR'>
+<head>
+  <meta charset='UTF-8' />
+  <meta name='viewport' content='width=device-width, initial-scale=1' />
+  <title>Estoque - Gestão de Faixas</title>
+  <script src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'></script>
+  <style>
+    :root {
+      --bg: #f4f7fa;
+      --header: #0f172a;
+      --header-light: #1e293b;
+      --accent: #4facfe;
+      --white: #ffffff;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --shadow: 0 2px 4px rgba(0,0,0,0.04);
+      --fx-vermelho: #ef4444;
+      --fx-amarelo: #f59e0b;
+      --fx-laranja: #f97316;
+      --fx-azul: #3b82f6;
+      --fx-verde: #10b981;
+      --fx-transito: #6366f1;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-size: 13px;
+    }
+    header.topbar {
+      background: linear-gradient(135deg, var(--header) 0%, var(--header-light) 100%);
+      color: #fff;
+      padding: 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      isolation: isolate;
+    }
+    .header-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 12px 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+      position: relative;
+    }
+    header.topbar h1 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      font-weight: 700;
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    nav.navbar {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 9999;
+    }
+    nav.navbar a.nav-btn {
+      color: #4facfe !important;
+      background: transparent !important;
+      border: none !important;
+      font: inherit !important;
+      cursor: pointer !important;
+      font-size: 12px !important;
+      font-weight: 500 !important;
+      padding: 6px 12px !important;
+      border-radius: 8px !important;
+      transition: all .25s ease !important;
+      text-decoration: none !important;
+      display: inline-block !important;
+    }
+    nav.navbar a.nav-btn:hover {
+      color: #00f2fe !important;
+      background: rgba(79,172,254,.10) !important;
+    }
+    nav.navbar a.nav-btn.active {
+      color: #00f2fe !important;
+      background: rgba(79,172,254,.15) !important;
+      border-bottom: 2px solid #00f2fe !important;
+    }
+    .nav-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 15px;
+    }
+    .filters-box {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 15px;
+      box-shadow: var(--shadow);
+    }
+    .filters-head {
+      padding: 8px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+    .filters-head .title { font-weight: 700; font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
+    .filters-body { padding: 15px; display: none; border-top: 1px solid var(--border); }
+    .filters-body.active { display: block; }
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+    .filter-group { display: flex; flex-direction: column; gap: 4px; }
+    .filter-group label { font-size: 10px; font-weight: 700; color: var(--text-muted); }
+    .filter-group select, .filter-group input {
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+      outline: none;
+      background: #fff;
+    }
+    .multi-select { position: relative; }
+    .multi-trigger {
+      width: 100%;
+      min-height: 34px;
+      padding: 6px 34px 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #fff;
+      font-size: 12px;
+      color: var(--text-main);
+      text-align: left;
+      cursor: pointer;
+      position: relative;
+    }
+    .multi-trigger::after {
+      content: '▾';
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 11px;
+      pointer-events: none;
+    }
+    .multi-panel {
+      display: none;
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+      z-index: 50;
+      padding: 8px;
+      max-height: 240px;
+      overflow: auto;
+    }
+    .multi-panel.open { display: block; }
+    .multi-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 4px;
+      font-size: 12px;
+      color: var(--text-main);
+      cursor: pointer;
+      border-radius: 6px;
+    }
+    .multi-option:hover { background: #f8fafc; }
+    .multi-option input { margin: 0; }
+    .multi-empty { color: var(--text-muted); font-size: 11px; padding: 8px 4px; font-weight: 600; }
+    .multi-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 6px 0;
+    }
+    .multi-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+    .multi-mini-btn {
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 8px;
+      cursor: pointer;
+      color: var(--text-main);
+    }
+    .multi-mini-btn:hover { border-color: var(--accent); color: var(--accent-dark); }
+    .tabs-container {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 15px;
+      overflow-x: auto;
+      padding-bottom: 5px;
+    }
+    .stock-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin: 0 0 15px;
+    }
+    .summary-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 10px 14px;
+    }
+    .summary-label {
+      color: var(--text-muted);
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+    }
+    .summary-value {
+      color: var(--header);
+      font-size: 20px;
+      font-weight: 900;
+      line-height: 1.25;
+      margin-top: 2px;
+    }
+    .summary-value small {
+      color: var(--text-muted);
+      font-size: 10px;
+      font-weight: 800;
+    }
+    .tab-btn {
+      padding: 10px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-transform: uppercase;
+      background: #fff;
+      color: var(--text-main);
+    }
+    .tab-vermelho.active { background: var(--fx-vermelho) !important; color: white !important; border-color: var(--fx-vermelho); }
+    .tab-amarelo.active { background: var(--fx-amarelo) !important; color: white !important; border-color: var(--fx-amarelo); }
+    .tab-laranja.active { background: var(--fx-laranja) !important; color: white !important; border-color: var(--fx-laranja); }
+    .tab-azul.active { background: var(--fx-azul) !important; color: white !important; border-color: var(--fx-azul); }
+    .tab-verde.active { background: var(--fx-verde) !important; color: white !important; border-color: var(--fx-verde); }
+    .tab-transito.active { background: var(--fx-transito) !important; color: white !important; border-color: var(--fx-transito); }
+    .tab-geral.active { background: var(--header) !important; color: white !important; border-color: var(--header); }
+    .tab-count {
+      background: rgba(0,0,0,0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+    }
+    .active .tab-count { background: rgba(255,255,255,0.2); }
+    .items-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 12px;
+    }
+    .card {
+      background: var(--white);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .card:hover { border-color: var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .card-header { padding: 12px 15px; background: #fafafa; border-bottom: 1px solid #f1f5f9; }
+    .card-responsavel { font-size: 9px; text-transform: uppercase; font-weight: 800; color: var(--accent-dark); margin-bottom: 2px; }
+    .card-title { font-size: 12px; font-weight: 800; color: var(--text-main); line-height: 1.3; }
+    .card-body { padding: 12px 15px; }
+    .info-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 11px; }
+    .info-label { color: var(--text-muted); font-weight: 500; }
+    .info-value { font-weight: 700; color: var(--text-main); }
+    .card-footer { padding: 10px 15px; background: #f8fafc; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
+    .volume-tag { font-size: 16px; font-weight: 900; color: var(--header); }
+    .lotes-detail {
+      display: none;
+      background: #fdfdfd;
+      padding: 10px 15px;
+      border-top: 1px dashed var(--border);
+    }
+    .card.open .lotes-detail { display: block; }
+    .lotes-table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 5px; }
+    .lotes-table th { text-align: left; color: var(--text-muted); padding: 4px; border-bottom: 1px solid var(--border); }
+    .lotes-table td { padding: 6px 4px; border-bottom: 1px solid #f8fafc; font-weight: 600; }
+    .badge { padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+    .bg-verde { background: #dcfce7; color: #166534; }
+    .bg-vermelho { background: #fee2e2; color: #991b1b; }
+    .bg-amarelo { background: #fef3c7; color: #92400e; }
+    .bg-laranja { background: #ffedd5; color: #9a3412; }
+    .bg-azul { background: #dbeafe; color: #1e40af; }
+    .bg-transito { background: #e0e7ff; color: #3730a3; }
+    @media (max-width: 768px) {
+      .header-container { padding: 12px 14px; }
+      header.topbar h1 { font-size: 14px; }
+      .nav-toggle { display: block !important; }
+      nav.navbar {
+        display: none !important;
+        position: absolute !important;
+        top: 100% !important;
+        left: 0 !important;
+        right: 0 !important;
+        flex-direction: column !important;
+        gap: 0 !important;
+        align-items: stretch !important;
+        background: var(--header-light) !important;
+        border-bottom: 1px solid rgba(255,255,255,.10) !important;
+        padding: 10px 0 !important;
+        max-height: calc(100vh - 56px);
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
+        z-index: 9999 !important;
+      }
+      nav.navbar.active { display: flex !important; }
+      nav.navbar a.nav-btn {
+        width: 100% !important;
+        text-align: left !important;
+        padding: 16px 16px !important;
+        border-radius: 0 !important;
+        border-bottom: 1px solid rgba(255,255,255,.06) !important;
+        color: rgba(229,231,235,.92) !important;
+        font-weight: 700 !important;
+        letter-spacing: .8px;
+        text-transform: uppercase;
+      }
+      nav.navbar a.nav-btn:hover {
+        background: rgba(79,172,254,.08) !important;
+        color: #e5e7eb !important;
+      }
+      nav.navbar a.nav-btn.active {
+        background: rgba(79,172,254,.14) !important;
+        color: #9ee7ff !important;
+        border-bottom: 1px solid rgba(255,255,255,.06) !important;
+        box-shadow: inset 0 -3px 0 #00f2fe !important;
+      }
+      .items-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+      #navbar.active { display: flex !important; }
+    }
+  
+/* ===== Data da última atualização da base ===== */
+.brand-block{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.last-updated{font-size:11px!important;font-weight:700!important;color:rgba(229,231,235,.92)!important;letter-spacing:.2px;line-height:1.2;white-space:nowrap;}
+.last-updated.loading{color:rgba(229,231,235,.70)!important;}
+.last-updated.error{color:#fbbf24!important;}
+@media (max-width:768px){.brand-block{max-width:calc(100% - 52px);}.last-updated{font-size:10px!important;white-space:normal!important;}}
+
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="header-container">
+    <div class="brand-block"><h1>📦 Gestão de Estoque</h1>
+      <div class="last-updated loading" id="lastUpdated">Consultando atualização da base...</div>
+    </div>
+    <button class="nav-toggle" id="navToggle">☰</button>
+    <nav class="navbar" id="navbar">
+      <a class="nav-btn" href="index.html">PAINEL DE VENDAS</a>
+      <a class="nav-btn" href="carteira.html">CARTEIRA</a>
+      <a class="nav-btn" href="rvv.html">RVV</a>
+      <a class="nav-btn" href="campanha.html">CAMPANHA DE VENDAS</a>
+      <a class="nav-btn active" href="estoque.html">ESTOQUE</a>
+      <a class="nav-btn" href="oportunidades.html">OPORTUNIDADES</a>
+      <a class="nav-btn" href="investimentos.html">INVESTIMENTOS</a>
+      <a class="nav-btn" href="forecast.html">FORECAST</a>
+    </nav>
+  </div>
+</header>
+<main class="container">
+  <section class="filters-box">
+    <div class="filters-head" onclick="toggleFilters()">
+      <div class="title">🔍 Filtros de Busca</div>
+      <div id="filter-icon">➕</div>
+    </div>
+    <div id="filters-body" class="filters-body">
+      <div class="filters-grid">
+        <div class="filter-group">
+          <label>Empresa</label>
+          <select id="f_empresa"><option value="">Todas</option></select>
+        </div>
+        <div class="filter-group">
+          <label>Centro (CD)</label>
+          <div class="multi-select" id="cd_multi">
+            <button type="button" class="multi-trigger" id="f_cd_trigger">Todos</button>
+            <div class="multi-panel" id="f_cd_panel">
+              <label class="multi-option"><input type="checkbox" id="f_cd_all" checked>Todos os CDs</label>
+              <div class="multi-divider"></div>
+              <div id="f_cd_options"></div>
+              <div class="multi-actions">
+                <button type="button" class="multi-mini-btn" id="f_cd_select_all">Selecionar todos</button>
+                <button type="button" class="multi-mini-btn" id="f_cd_clear">Limpar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="filter-group">
+          <label>Categoria</label>
+          <select id="f_categoria"><option value="">Todas</option></select>
+        </div>
+        <div class="filter-group">
+          <label>Segmento</label>
+          <select id="f_segmento"><option value="">Todos</option></select>
+        </div>
+        <div class="filter-group">
+          <label>Responsável</label>
+          <select id="f_responsavel"><option value="">Todos</option></select>
+        </div>
+        <div class="filter-group">
+          <label>Buscar Item/SKU</label>
+          <input type="text" id="f_search" placeholder="Digite nome ou SKU...">
+        </div>
+      </div>
+    </div>
+  </section>
+  <nav id="tabs-nav" class="tabs-container"></nav>
+  <section id="stock-summary" class="stock-summary" aria-label="Resumo do estoque da faixa selecionada"></section>
+  <div id="lista" class="items-grid"></div>
+</main>
+
+<script>
+/* ===== PFV: última atualização da base via ultima_atualizacao.json =====
+   Coloque o arquivo ultima_atualizacao.json na raiz do repositório.
+   O JSON deve ter uma chave para cada base, por exemplo:
+   { "base.xlsx": "2026-07-10T08:42:00-03:00" }
+*/
+(function(){
+  const BASE_KEY = 'Estoque_com_BASE_NORMALIZADA.xlsx';
+  const JSON_URL = 'ultima_atualizacao.json';
+
+  function ensureElement(){
+    let el = document.getElementById('lastUpdated');
+    if(el) return el;
+    const h1 = document.querySelector('header.topbar h1');
+    if(!h1) return null;
+    const wrap = document.createElement('div');
+    wrap.className = 'brand-block';
+    h1.parentNode.insertBefore(wrap, h1);
+    wrap.appendChild(h1);
+    el = document.createElement('div');
+    el.className = 'last-updated loading';
+    el.id = 'lastUpdated';
+    el.textContent = 'Consultando atualização da base...';
+    wrap.appendChild(el);
+    return el;
+  }
+
+  function formatDate(value){
+    if(value === undefined || value === null || String(value).trim() === '') return null;
+    const d = new Date(value);
+    if(isNaN(d.getTime()) || d.getTime() <= 0) return null;
+    return d.toLocaleString('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+  }
+
+  function setStatus(text, className){
+    const el = ensureElement();
+    if(!el) return;
+    el.classList.remove('loading','error');
+    if(className) el.classList.add(className);
+    el.textContent = text;
+  }
+
+  async function carregarDataDaBase(){
+    try{
+      const resp = await fetch(JSON_URL + '?v=' + Date.now(), { cache: 'no-store' });
+      if(!resp.ok) throw new Error('Erro ao carregar ' + JSON_URL + ': ' + resp.status);
+      const info = await resp.json();
+      const raw = info && info[BASE_KEY];
+      const formatted = formatDate(raw);
+      if(!formatted) throw new Error('Data ausente ou inválida para ' + BASE_KEY + ' em ' + JSON_URL);
+      setStatus('Última atualização da base: ' + formatted, '');
+    }catch(err){
+      console.warn('Não foi possível obter a última atualização da base:', err);
+      setStatus('Última atualização da base não encontrada', 'error');
+    }
+  }
+
+  ensureElement();
+  carregarDataDaBase();
+})();
+</script>
+
+<script>
+  let RAW_DATA = [];
+  let activeFaixa = 'VERMELHO';
+  let selectedCDs = new Set();
+  let allCDValues = [];
+  const fmtNum = n => Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtBR = d => d ? new Date(d).toLocaleDateString('pt-BR') : '—';
+  const normStr = s => String(s || '').trim();
+  const normCmp = s => String(s || '').normalize('NFD').replace(/\p{Diacritic}/gu,'').replace(/\s+/g,' ').trim().toUpperCase();
+  function getFieldObj(obj, ...candidates){
+    const entries = Object.entries(obj || {});
+    for(const cand of candidates){
+      const hit = entries.find(([k]) => normCmp(k) === normCmp(cand));
+      if(hit) return hit[1];
+    }
+    return '';
+  }
+  const normFaixa = v => String(v || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toUpperCase().trim();
+  function toggleFilters() {
+    const body = document.getElementById('filters-body');
+    const icon = document.getElementById('filter-icon');
+    const isActive = body.classList.toggle('active');
+    icon.textContent = isActive ? '➖' : '➕';
+  }
+  function closeCDPanel(){ document.getElementById('f_cd_panel').classList.remove('open'); }
+  function updateCDTrigger(){
+    const trigger = document.getElementById('f_cd_trigger');
+    const values = Array.from(selectedCDs);
+    document.getElementById('f_cd_all').checked = values.length === 0;
+    if(values.length === 0){
+      trigger.textContent = 'Todos';
+      return;
+    }
+    if(values.length <= 2){
+      trigger.textContent = values.join(', ');
+      return;
+    }
+    trigger.textContent = `${values.length} CDs selecionados`;
+  }
+  function syncCDCheckboxes(){
+    document.querySelectorAll('#f_cd_options input[type="checkbox"]').forEach(chk => {
+      chk.checked = selectedCDs.has(chk.value);
+    });
+    updateCDTrigger();
+  }
+  function currentCDUniverse(){
+    const fEmp = document.getElementById('f_empresa')?.value || '';
+    const fResp = document.getElementById('f_responsavel')?.value || '';
+    const fCat = document.getElementById('f_categoria')?.value || '';
+    const fSeg = document.getElementById('f_segmento')?.value || '';
+    const seen = new Map();
+    RAW_DATA.forEach(r => {
+      if (fEmp && r.empresa !== fEmp) return;
+      if (fResp && r.resp !== fResp) return;
+      if (fCat && normCmp(r.categoria) !== normCmp(fCat)) return;
+      if (fSeg && normCmp(r.segmento) !== normCmp(fSeg)) return;
+      const raw = String(r.cd || '').trim();
+      if(!raw) return;
+      const key = normCmp(raw);
+      if(!seen.has(key)) seen.set(key, raw);
+    });
+    return [...seen.values()].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR'));
+  }
+  function renderCDOptions(values){
+    const box = document.getElementById('f_cd_options');
+    if(!values.length){
+      box.innerHTML = '<div class="multi-empty">Nenhum CD disponível para o responsável selecionado.</div>';
+      selectedCDs.clear();
+      updateCDTrigger();
+      return;
+    }
+    box.innerHTML = values.map(v => `<label class="multi-option"><input type="checkbox" value="${String(v).replace(/"/g,'&quot;')}">${v}</label>`).join('');
+    box.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+      chk.checked = selectedCDs.has(chk.value);
+      chk.addEventListener('change', () => {
+        if(chk.checked) selectedCDs.add(chk.value); else selectedCDs.delete(chk.value);
+        updateCDTrigger();
+        render();
+      });
+    });
+    updateCDTrigger();
+  }
+  function updateCDOptions(){
+    const available = currentCDUniverse();
+    const availableSet = new Set(available);
+    selectedCDs = new Set(Array.from(selectedCDs).filter(v => availableSet.has(v)));
+    renderCDOptions(available);
+    document.getElementById('f_cd_select_all').disabled = available.length === 0;
+    document.getElementById('f_cd_clear').disabled = available.length === 0;
+    render();
+  }
+  function initCDFilter(){
+    if(document.getElementById('f_cd_trigger').dataset.ready === '1') return;
+    document.getElementById('f_cd_trigger').dataset.ready = '1';
+    document.getElementById('f_cd_trigger').addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.getElementById('f_cd_panel').classList.toggle('open');
+    });
+    document.getElementById('f_cd_all').addEventListener('change', (e) => {
+      if(e.target.checked){
+        selectedCDs.clear();
+        syncCDCheckboxes();
+        render();
+      }
+    });
+    document.getElementById('f_cd_select_all').addEventListener('click', () => {
+      selectedCDs = new Set(currentCDUniverse());
+      syncCDCheckboxes();
+      render();
+    });
+    document.getElementById('f_cd_clear').addEventListener('click', () => {
+      selectedCDs.clear();
+      syncCDCheckboxes();
+      render();
+    });
+    document.addEventListener('click', (e) => {
+      const multi = document.getElementById('cd_multi');
+      if(!multi.contains(e.target)) closeCDPanel();
+    });
+  }
+  function parseLocaleNumber(val) {
+    if (val === undefined || val === null || val === '') return 0;
+    if (typeof val === 'number') return isNaN(val) ? 0 : val;
+    let s = String(val).trim();
+    if (!s || s === '-') return 0;
+    s = s.replace(/\s| /g, '');
+    const hasComma = s.includes(',');
+    const hasDot = s.includes('.');
+    if (hasComma && hasDot) {
+      if (s.lastIndexOf(',') > s.lastIndexOf('.')) {
+        s = s.replace(/\./g, '').replace(',', '.');
+      } else {
+        s = s.replace(/,/g, '');
+      }
+    } else if (hasComma) {
+      s = s.replace(',', '.');
+    }
+    const n = Number(s);
+    return isNaN(n) ? 0 : n;
+  }
+  function parseExcelDate(val) {
+    if (!val || val === '-') return null;
+    if (val instanceof Date) return val;
+    if (typeof val === 'number') return new Date(Math.round((val - 25569) * 86400 * 1000));
+    if (typeof val === 'string') {
+      const s = val.trim();
+      const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+      if (m) {
+        const a = Number(m[1]), b = Number(m[2]), c = Number(m[3]);
+        const year = c < 100 ? 2000 + c : c;
+        const day = a > 12 ? a : b;
+        const month = a > 12 ? b : a;
+        const dt = new Date(year, month - 1, day);
+        return isNaN(dt) ? null : dt;
+      }
+      const dt = new Date(s);
+      return isNaN(dt) ? null : dt;
+    }
+    return null;
+  }
+  async function load() {
+    try {
+      const resp = await fetch('Estoque_com_BASE_NORMALIZADA.xlsx');
+      const buf = await resp.arrayBuffer();
+      const wb = XLSX.read(buf, { type: 'array', cellDates: true });
+      const sh = wb.Sheets[wb.SheetNames[0]];
+      const rawArrays = XLSX.utils.sheet_to_json(sh, { header: 1, defval: '' });
+      let headerRowIndex = rawArrays.findIndex(row => {
+        const norm = (row || []).map(c => normCmp(c));
+        return norm.includes('MATERIAL') && norm.includes('FAIXA') && norm.includes('PREVISAO TRANSITO');
+      });
+      if (headerRowIndex === -1) {
+        headerRowIndex = rawArrays.findIndex(row => {
+          const norm = (row || []).map(c => normCmp(c));
+          return norm.includes('MATERIAL') && norm.includes('FAIXA') && norm.includes('VENCIMENTO');
+        });
+      }
+      if (headerRowIndex === -1) headerRowIndex = 0;
+      const rows = XLSX.utils.sheet_to_json(sh, {
+        range: headerRowIndex,
+        defval: '',
+        raw: false,
+        dateNF: 'dd/mm/yyyy'
+      });
+      RAW_DATA = rows.map(row => ({
+        empresa: normStr(getFieldObj(row,'EMPRESA')),
+        cd: normStr(getFieldObj(row,'CD','CENTRO','CENTRO CD')),
+        material: String(getFieldObj(row,'MATERIAL','SKU','CODIGO MATERIAL') || ''),
+        desc: normStr(getFieldObj(row,'DESC','DESCRICAO','DESCRIÇÃO','DESCRICAO MATERIAL','DESCRIÇÃO MATERIAL')),
+        lote: String(getFieldObj(row,'LOTE') || ''),
+        faixa: normStr(getFieldObj(row,'FAIXA','FAIXA VENCIMENTO')),
+        venc: parseExcelDate(getFieldObj(row,'VENC','VENCIMENTO','DATA VENCIMENTO')),
+        vol: parseLocaleNumber(getFieldObj(row,'LIVRE LT.','VOL','VOLUME','QTD','QUANTIDADE')),
+        livreCxs: parseLocaleNumber(getFieldObj(row,'LIVRE CXS','CAIXAS','CXS')),
+        resp: normStr(getFieldObj(row,'RESP','RESPONSAVEL','RESPONSÁVEL')),
+        categoria: normStr(getFieldObj(row,'CATEGORIA','CATEGORIA ITEM','CAT')),
+        segmento: normStr(getFieldObj(row,'SEGMENTO','Segmento')),
+        previsaoTransito: parseExcelDate(getFieldObj(row,'PREVISÃO TRÂNSITO','PREVISAO TRANSITO','PREVISÃO TRANSITO','PREVISAO TRÂNSITO'))
+      })).filter(r => r.material && normCmp(r.material) !== 'MATERIAL');
+      populateFilters();
+      render();
+    } catch (e) {
+      console.error(e);
+      document.getElementById('lista').innerHTML = `<p style="text-align: center; padding: 2rem;">Erro ao carregar o arquivo Excel.</p>`;
+    }
+  }
+  function populateFilters() {
+    const setSelect = (id, field) => {
+      const sel = document.getElementById(id);
+      const seen = new Map();
+      RAW_DATA.forEach(r => {
+        const raw = String(r[field] || '').trim();
+        if(!raw) return;
+        const key = normCmp(raw);
+        if(!seen.has(key)) seen.set(key, raw);
+      });
+      const values = [...seen.values()].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR'));
+      const firstLabel = id === 'f_categoria' ? 'Todas' : (id === 'f_responsavel' ? 'Todos' : 'Todas');
+      sel.innerHTML = `<option value="">${firstLabel}</option>` + values.map(v => `<option value="${v}">${v}</option>`).join('');
+      return values;
+    };
+    setSelect('f_empresa', 'empresa');
+    setSelect('f_categoria', 'categoria');
+    setSelect('f_segmento', 'segmento');
+    setSelect('f_responsavel', 'resp');
+    allCDValues = (() => {
+      const seen = new Map();
+      RAW_DATA.forEach(r => {
+        const raw = String(r.cd || '').trim();
+        if(!raw) return;
+        const key = normCmp(raw);
+        if(!seen.has(key)) seen.set(key, raw);
+      });
+      return [...seen.values()].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR'));
+    })();
+    initCDFilter();
+    updateCDOptions();
+    document.getElementById('f_empresa').addEventListener('change', () => { updateCDOptions(); render(); });
+    document.getElementById('f_categoria').addEventListener('change', () => { updateCDOptions(); render(); });
+    document.getElementById('f_segmento').addEventListener('change', () => { updateCDOptions(); render(); });
+    document.getElementById('f_responsavel').addEventListener('change', () => { updateCDOptions(); render(); });
+    document.getElementById('f_search').addEventListener('input', render);
+  }
+  function getFaixaClass(fx) {
+    const f = normFaixa(fx);
+    if (f.includes('VERDE')) return 'verde';
+    if (f.includes('VERMELHO')) return 'vermelho';
+    if (f.includes('AMARELO')) return 'amarelo';
+    if (f.includes('LARANJA')) return 'laranja';
+    if (f.includes('AZUL')) return 'azul';
+    if (f.includes('TRANSITO')) return 'transito';
+    return 'sem';
+  }
+  function render() {
+    const fEmp = document.getElementById('f_empresa')?.value || '';
+    const fCds = Array.from(selectedCDs);
+    const fCat = document.getElementById('f_categoria')?.value || '';
+    const fSeg = document.getElementById('f_segmento')?.value || '';
+    const fResp = document.getElementById('f_responsavel')?.value || '';
+    const fSearch = (document.getElementById('f_search')?.value || '').toLowerCase();
+    const filtered = RAW_DATA.filter(r => {
+      if (fEmp && r.empresa !== fEmp) return false;
+      if (fCds.length && !fCds.includes(r.cd)) return false;
+      if (fCat && normCmp(r.categoria) !== normCmp(fCat)) return false;
+      if (fSeg && normCmp(r.segmento) !== normCmp(fSeg)) return false;
+      if (fResp && r.resp !== fResp) return false;
+      if (fSearch && !r.desc.toLowerCase().includes(fSearch) && !r.material.toLowerCase().includes(fSearch)) return false;
+      return true;
+    });
+    const order = ['GERAL', 'VERMELHO', 'AMARELO', 'LARANJA', 'AZUL', 'VERDE', 'TRANSITO'];
+    const tabsNav = document.getElementById('tabs-nav');
+    tabsNav.innerHTML = order.map(fx => {
+      const count = fx === 'GERAL' ? filtered.length : filtered.filter(r => normFaixa(r.faixa).includes(fx)).length;
+      return `<button class="tab-btn tab-${fx.toLowerCase()} ${activeFaixa === fx ? 'active' : ''}" onclick="setActiveFaixa('${fx}')">
+        <span>${fx}</span> <span class="tab-count">${count}</span>
+      </button>`;
+    }).join('');
+    const skuGroups = {};
+    filtered.forEach(r => {
+      if (activeFaixa !== 'GERAL' && !normFaixa(r.faixa).includes(activeFaixa)) return;
+      const key = `${r.material}_${r.cd}_${r.empresa}`;
+      if (!skuGroups[key]) {
+        skuGroups[key] = { ...r, lotes: [] };
+      }
+      skuGroups[key].lotes.push({ lote: r.lote || 'S/ LOTE', venc: r.venc, previsaoTransito: r.previsaoTransito, vol: r.vol, faixa: r.faixa });
+    });
+    const items = Object.values(skuGroups);
+    items.forEach(it => {
+      it.lotes.sort((a, b) => {
+        const da = activeFaixa === 'TRANSITO' ? (a.previsaoTransito || a.venc || new Date(2099,0,1)) : (a.venc || new Date(2099,0,1));
+        const db = activeFaixa === 'TRANSITO' ? (b.previsaoTransito || b.venc || new Date(2099,0,1)) : (b.venc || new Date(2099,0,1));
+        return da - db;
+      });
+      it.minVenc = it.lotes.reduce((acc, l) => {
+        if (!l.venc) return acc;
+        if (!acc || l.venc < acc) return l.venc;
+        return acc;
+      }, null);
+      it.minPrevisaoTransito = it.lotes.reduce((acc, l) => {
+        if (!l.previsaoTransito) return acc;
+        if (!acc || l.previsaoTransito < acc) return l.previsaoTransito;
+        return acc;
+      }, null);
+      it.totalVol = it.lotes.reduce((sum, l) => sum + l.vol, 0);
+    });
+    items.sort((a, b) => {
+      const sortA = activeFaixa === 'TRANSITO' ? (a.minPrevisaoTransito || a.minVenc || new Date(2099,0,1)) : (a.minVenc || new Date(2099,0,1));
+      const sortB = activeFaixa === 'TRANSITO' ? (b.minPrevisaoTransito || b.minVenc || new Date(2099,0,1)) : (b.minVenc || new Date(2099,0,1));
+      const dateDiff = sortA - sortB;
+      if (dateDiff !== 0) return dateDiff;
+      return (b.totalVol || 0) - (a.totalVol || 0);
+    });
+    const totalVolume = items.reduce((sum, it) => sum + (it.totalVol || 0), 0);
+    const totalLotes = items.reduce((sum, it) => sum + it.lotes.length, 0);
+    const summary = document.getElementById('stock-summary');
+    summary.innerHTML = `
+      <div class="summary-card">
+        <div class="summary-label">Faixa selecionada</div>
+        <div class="summary-value">${activeFaixa}</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Itens</div>
+        <div class="summary-value">${items.length}</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Quantidade total em estoque</div>
+        <div class="summary-value">${fmtNum(totalVolume)} <small>KG</small></div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">Lotes</div>
+        <div class="summary-value">${totalLotes}</div>
+      </div>
+    `;
+    const list = document.getElementById('lista');
+    if (items.length === 0) {
+      list.innerHTML = `<p style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">Nenhum item encontrado.</p>`;
+      return;
+    }
+    list.innerHTML = items.map(it => `
+      <div class="card" onclick="this.classList.toggle('open')">
+        <div class="card-header">
+          <div class="card-responsavel">${it.resp || 'SEM RESPONSÁVEL'}</div>
+          <div class="card-title">${it.desc.toUpperCase()}</div>
+        </div>
+        <div class="card-body">
+          <div class="info-row"><span class="info-label">SKU</span><span class="info-value">${it.material}</span></div>
+          <div class="info-row"><span class="info-label">Centro</span><span class="info-value">${it.cd}</span></div>
+          <div class="info-row">
+            <span class="info-label">Lotes</span>
+            <span class="info-value" style="${it.lotes.length > 1 ? 'color:var(--fx-vermelho)' : ''}">
+              ${it.lotes.length} lote(s) ${it.lotes.length > 1 ? '▼' : ''}
+            </span>
+          </div>
+          ${activeFaixa === 'GERAL' ? `<div class="info-row"><span class="info-label">Faixas</span><span class="info-value">${[...new Set(it.lotes.map(l => l.faixa).filter(Boolean))].join(', ') || '—'}</span></div>` : ''}
+          ${activeFaixa === 'TRANSITO' ? `<div class="info-row"><span class="info-label">Prev. trânsito</span><span class="info-value">${fmtBR(it.minPrevisaoTransito)}</span></div>` : ''}
+        </div>
+        <div class="lotes-detail">
+          <table class="lotes-table">
+            <thead>
+              <tr><th>Lote</th><th>Vencimento</th>${activeFaixa === 'TRANSITO' ? '<th>Prev. trânsito</th>' : ''}<th style="text-align:right">Volume</th></tr>
+            </thead>
+            <tbody>
+              ${it.lotes.map(l => `
+                <tr>
+                  <td>${l.lote}</td>
+                  <td>${fmtBR(l.venc)}</td>
+                  ${activeFaixa === 'TRANSITO' ? `<td>${fmtBR(l.previsaoTransito)}</td>` : ''}
+                  <td style="text-align:right">${fmtNum(l.vol)} KG</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div class="card-footer">
+          <span class="badge bg-${activeFaixa === 'GERAL' ? 'azul' : getFaixaClass(it.faixa)}">${activeFaixa === 'GERAL' ? 'GERAL' : it.faixa}</span>
+          <div class="volume-tag">${fmtNum(it.totalVol)} <span style="font-size: 9px; color: var(--text-muted)">KG</span></div>
+        </div>
+      </div>
+    `).join('');
+  }
+  function setActiveFaixa(fx) { activeFaixa = fx; render(); }
+  window.onload = load;
+</script>
+<script>
+  (function(){
+    function initNav(){
+      const nav = document.getElementById('navbar');
+      const toggle = document.getElementById('navToggle');
+      if (!nav || !toggle) return;
+      if (toggle.dataset.navReady === '1') return;
+      toggle.dataset.navReady = '1';
+      const setOpen = (open) => {
+        nav.classList.toggle('active', open);
+        if (window.innerWidth <= 768) {
+          nav.style.display = open ? 'flex' : '';
+        } else {
+          nav.style.display = '';
+        }
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      };
+      toggle.setAttribute('aria-controls', 'navbar');
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.setAttribute('type', 'button');
+      toggle.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        setOpen(!nav.classList.contains('active'));
+      });
+      document.addEventListener('click', function(e){
+        if (e.target === toggle || toggle.contains(e.target) || nav.contains(e.target)) return;
+        if (nav.classList.contains('active')) setOpen(false);
+      });
+      window.addEventListener('resize', function(){
+        if (window.innerWidth > 768) {
+          nav.classList.remove('active');
+          nav.style.display = '';
+          toggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+      const currentPage = window.location.pathname.split('/').pop() || 'estoque.html';
+      document.querySelectorAll('nav.navbar a.nav-btn').forEach(link => {
+        const href = link.getAttribute('href') || '';
+        if (href === currentPage || (currentPage === '' && href === 'index.html')) {
+          link.classList.add('active');
+        } else {
+          link.classList.remove('active');
+        }
+        link.addEventListener('click', () => setOpen(false));
+      });
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initNav);
+    } else {
+      initNav();
+    }
+  })();
+</script>
+</body>
+</html>

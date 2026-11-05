@@ -526,7 +526,7 @@ function situacaoMatch(situacaoFiltro, situacaoRow){
 
 async function load(){
   if(typeof XLSX === 'undefined') return;
-  const r=await fetch('Carteira.xlsx');
+  const r=await fetch('Carteira.xlsx?v=' + Date.now(), { cache: 'no-store' });
   if(!r.ok) throw new Error('Não foi possível carregar Carteira.xlsx');
   const b=await r.arrayBuffer();
   const wb=XLSX.read(b,{type:'array'});

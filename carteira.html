@@ -529,8 +529,14 @@ async function load(){
   const r=await fetch('Carteira.xlsx?v=' + Date.now(), { cache: 'no-store' });
   if(!r.ok) throw new Error('Não foi possível carregar Carteira.xlsx');
   const b=await r.arrayBuffer();
-  const wb=XLSX.read(b,{type:'array'});
-  dados=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+  const wb=XLSX.read(b,{type:'array',cellDates:true});
+  const nomeAba=wb.SheetNames.includes('BASE CARTEIRA')?'BASE CARTEIRA':wb.SheetNames[0];
+  dados=XLSX.utils.sheet_to_json(wb.Sheets[nomeAba],{defval:'',raw:true,blankrows:false});
+  // Normaliza números de ordem para evitar perda ou divergência na comparação.
+  dados.forEach(l=>{
+    const k=Object.keys(l).find(x=>normName2(x)===normName2('Ordem de Vendas'));
+    if(k) l[k]=String(l[k]??'').trim().replace(/\.0$/,'');
+  });
 
   window.__PFV_SYNC__ = window.__PFV_SYNC__ || pfvBindFilterSync({
     emp:   { id:'f_empresa', allowCreate:true },
@@ -569,7 +575,7 @@ function render(){
   const sit=selectedValues('f_sit');
   const cli=(g('f_cli')||'').trim();
   const nome=(g('f_nome')||'').toLowerCase();
-  const ord=(g('f_ord')||'').trim();
+  const ord=(g('f_ord')||'').replace(/\D/g,'');
   const di=parseISODate(g('f_data_ini'));
 
   const filtered = dados.filter(l=>{
@@ -582,7 +588,8 @@ function render(){
     if(sit.length && !sit.some(v=>situacaoMatch(v, getSituacao(l)))) return false;
     if(cli && !String(getField2(l,'Clifor','CLIFOR')||'').includes(cli)) return false;
     if(nome && !String(getField2(l,'Cliente','CLIENTE')||'').toLowerCase().includes(nome)) return false;
-    if(ord && !String(getField2(l,'Ordem de Vendas','ORDEM','ORDEM DE VENDAS')||'').includes(ord)) return false;
+    const ordemLinha=String(getField2(l,'Ordem de Vendas','ORDEM','ORDEM DE VENDAS')||'').replace(/\D/g,'');
+    if(ord && ordemLinha!==ord) return false;
     if(di){
       const dObj=parseAnyDate(getField2(l,'Data criação','DATA CRIACAO','DATACRIACAO'));
       if(!dObj || dObj < di) return false;
@@ -599,6 +606,11 @@ function render(){
     arr.push(r);
     groups.set(ordv, arr);
   });
+
+  if(ord){
+    const totalOrdem=dados.filter(l=>String(getField2(l,'Ordem de Vendas','ORDEM','ORDEM DE VENDAS')||'').replace(/\D/g,'')===ord).length;
+    console.info('Diagnóstico ordem',ord,'linhas na base:',totalOrdem,'linhas após filtros:',filtered.length);
+  }
 
   const orderList = [];
   groups.forEach((items, ordv)=>{
@@ -642,24 +654,15 @@ function render(){
   // Renderizar tabela
   const tb = document.querySelector('#tblOrdens tbody');
   tb.innerHTML = '';
-  const todasDatas=filtered.map(item=>parseAnyDate(getField2(item,'Data criação','DATA CRIACAO','DATACRIACAO'))).filter(Boolean);
-  const dataMaxTabela=todasDatas.length ? new Date(Math.max(...todasDatas.map(d=>d.getTime()))) : null;
-  document.getElementById('tabelaCount').textContent = itemCount.toLocaleString('pt-BR') + ' item' + (itemCount === 1 ? '' : 's') + (dataMaxTabela ? ' · até ' + dataMaxTabela.toLocaleDateString('pt-BR') : '');
+  document.getElementById('tabelaCount').textContent = itemCount.toLocaleString('pt-BR') + ' item' + (itemCount === 1 ? '' : 's');
 
   if(!orderList.length){
     tb.innerHTML = '<tr><td colspan="23" style="text-align:center;padding:16px;color:var(--muted);font-weight:900">Nenhuma ordem encontrada com os filtros aplicados.</td></tr>';
     return;
   }
 
-  // Ordena pela maior Data criação de cada ordem, da mais recente para a mais antiga.
-  orderList.forEach(grupo=>{
-    grupo.dataCriacaoMax = grupo.items.reduce((maior,item)=>{
-      const data=parseAnyDate(getField2(item,'Data criação','DATA CRIACAO','DATACRIACAO'));
-      const tempo=data ? data.getTime() : 0;
-      return Math.max(maior,tempo);
-    },0);
-  });
-  orderList.sort((a,b)=> (b.dataCriacaoMax-a.dataCriacaoMax) || String(b.ordv).localeCompare(String(a.ordv),'pt-BR',{numeric:true}));
+  orderList.forEach(g=>g.dataMax=Math.max(...g.items.map(it=>parseAnyDate(getField2(it,'Data criação','DATA CRIACAO','DATACRIACAO'))?.getTime()||0)));
+  orderList.sort((a,b)=>(b.dataMax-a.dataMax)||String(b.ordv).localeCompare(String(a.ordv),'pt-BR',{numeric:true}));
 
   const frag = document.createDocumentFragment();
 

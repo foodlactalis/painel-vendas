@@ -306,6 +306,8 @@ function pfvBindFilterSync(map){
       <button class="btn" id="btnExportFiltrado" type="button">Baixar base filtrada</button>
       <button class="btn" id="btnExportTotal" type="button">Baixar base total</button>
       <button class="btn" id="btnLimpar">Limpar</button>
+      <input id="arquivoCarteira" type="file" accept=".xlsx,.xls" style="display:none" />
+      <button class="btn" id="btnSelecionarBase" type="button">Selecionar base atualizada</button>
       <button class="btn primary" id="btnReload">Recarregar</button>
     </div>
   </section>
@@ -524,15 +526,28 @@ function situacaoMatch(situacaoFiltro, situacaoRow){
   return s.includes(f);
 }
 
-async function load(){
-  if(typeof XLSX === 'undefined') return;
-  const r=await fetch('Carteira.xlsx?v=' + Date.now(), { cache: 'no-store' });
-  if(!r.ok) throw new Error('Não foi possível carregar Carteira.xlsx');
-  const b=await r.arrayBuffer();
-  const wb=XLSX.read(b,{type:'array'});
+function processarWorkbookCarteira(wb, origem){
   const nomeAba = wb.SheetNames.includes('BASE CARTEIRA') ? 'BASE CARTEIRA' : wb.SheetNames[0];
   const ws = wb.Sheets[nomeAba];
-  dados=XLSX.utils.sheet_to_json(ws,{defval:'',raw:true,blankrows:false});
+  if(!ws) throw new Error('Aba BASE CARTEIRA não encontrada.');
+  dados = XLSX.utils.sheet_to_json(ws,{defval:'',raw:true,blankrows:false});
+  const datas = dados.map(r=>parseAnyDate(getField2(r,'Data criação','DATA CRIACAO','DATACRIACAO'))).filter(Boolean);
+  const maiorData = datas.length ? new Date(Math.max(...datas.map(d=>d.getTime()))) : null;
+  const status = document.getElementById('statusBase');
+  if(status){
+    status.style.background='#ecfdf5'; status.style.color='#065f46';
+    status.textContent = `Base carregada: ${origem} · ${dados.length.toLocaleString('pt-BR')} linhas · Data criação mais recente: ${maiorData ? maiorData.toLocaleDateString('pt-BR') : 'não identificada'}`;
+  }
+}
+async function load(){
+  if(typeof XLSX === 'undefined') return;
+  const status=document.getElementById('statusBase');
+  if(status) status.textContent='Buscando Carteira.xlsx atualizada...';
+  const r=await fetch('./Carteira.xlsx?arquivo=' + Date.now(), { cache: 'no-store', headers:{'Cache-Control':'no-cache'} });
+  if(!r.ok) throw new Error('Não foi possível carregar Carteira.xlsx');
+  const b=await r.arrayBuffer();
+  const wb=XLSX.read(b,{type:'array',cellDates:true});
+  processarWorkbookCarteira(wb,'Carteira.xlsx da pasta do painel');
 
   window.__PFV_SYNC__ = window.__PFV_SYNC__ || pfvBindFilterSync({
     emp:   { id:'f_empresa', allowCreate:true },
@@ -604,9 +619,7 @@ function render(){
 
   const orderList = [];
   groups.forEach((items, ordv)=>{
-    const datasCriacao = items.map(it=>parseAnyDate(getField2(it,'Data criação','DATA CRIACAO','DATACRIACAO'))).filter(Boolean);
-    const dataCriacaoMax = datasCriacao.length ? new Date(Math.max(...datasCriacao.map(d=>d.getTime()))) : null;
-    orderList.push({ordv, items, dataCriacaoMax});
+    orderList.push({ordv, items});
   });
 
   // KPIs
@@ -637,9 +650,7 @@ function render(){
 
   document.getElementById('kpiVolLabel').textContent = 'Volume atendido';
   document.getElementById('sumTitle').textContent = 'Resumo';
-  const datasVisiveis = filtered.map(it=>parseAnyDate(getField2(it,'Data criação','DATA CRIACAO','DATACRIACAO'))).filter(Boolean);
-  const dataMaisRecente = datasVisiveis.length ? new Date(Math.max(...datasVisiveis.map(d=>d.getTime()))) : null;
-  document.getElementById('sumSub').textContent = `${ordCount.toLocaleString('pt-BR')} ordens · ${itemCount.toLocaleString('pt-BR')} itens · dados até ${dataMaisRecente ? dataMaisRecente.toLocaleDateString('pt-BR') : '—'}`;
+  document.getElementById('sumSub').textContent = `${ordCount.toLocaleString('pt-BR')} ordens · ${itemCount.toLocaleString('pt-BR')} itens · filtros aplicados`;
 
   // Mostrar/esconder painéis
   document.getElementById('summaryPanel').style.display = itemCount > 0 ? 'block' : 'none';
@@ -655,11 +666,10 @@ function render(){
     return;
   }
 
-  // Exibe primeiro as ordens com data de criação mais recente.
   orderList.sort((a,b)=> {
-    const da = a.dataCriacaoMax ? a.dataCriacaoMax.getTime() : 0;
-    const db = b.dataCriacaoMax ? b.dataCriacaoMax.getTime() : 0;
-    return (db-da) || String(b.ordv).localeCompare(String(a.ordv),'pt-BR');
+    const ad=Math.max(...a.items.map(it=>parseAnyDate(getField2(it,'Data criação','DATA CRIACAO','DATACRIACAO'))?.getTime()||0));
+    const bd=Math.max(...b.items.map(it=>parseAnyDate(getField2(it,'Data criação','DATA CRIACAO','DATACRIACAO'))?.getTime()||0));
+    return (bd-ad) || String(b.ordv).localeCompare(String(a.ordv),'pt-BR');
   });
 
   const frag = document.createDocumentFragment();
@@ -787,6 +797,29 @@ function render(){
   ro.observe(tblWrap);
 })();
 
+(function(){
+  const inputArquivo=document.getElementById('arquivoCarteira');
+  document.getElementById('btnSelecionarBase')?.addEventListener('click',()=>inputArquivo?.click());
+  inputArquivo?.addEventListener('change',async()=>{
+    const arquivo=inputArquivo.files?.[0]; if(!arquivo) return;
+    try{
+      const b=await arquivo.arrayBuffer();
+      const wb=XLSX.read(b,{type:'array',cellDates:true});
+      processarWorkbookCarteira(wb,arquivo.name+' (selecionada manualmente)');
+      fillSelByFields('f_empresa','Empresa','EMPRESA');
+      fillSelByFields('f_ger','Gerente','GERENTE');
+      fillSelByFields('f_coord','Coordenador','COORDENADOR','Coordenação','COORDENAÇÃO','Coordenacao','COORDENACAO');
+      fillSelByFields('f_vend','Vendedor','VENDEDOR');
+      fillSelByFields('f_cat','Chave Linha','CHAVE LINHA','ChaveLinha');
+      fillSelByFields('f_sit','Situação','SITUAÇÃO','SITUACAO','situacao');
+      initMultiSelects(); render();
+    }catch(err){
+      const status=document.getElementById('statusBase');
+      if(status){status.style.background='#fef2f2';status.style.color='#991b1b';status.textContent='Erro ao abrir a base selecionada: '+err.message;}
+      console.error(err);
+    }
+  });
+})();
 (function(){
   document.getElementById('btnToggleFiltros')?.addEventListener('click', ()=>{const box=document.getElementById('filtersBox'); const collapsed=box.classList.toggle('collapsed'); document.getElementById('btnToggleFiltros').textContent=collapsed?'Mostrar':'Ocultar';});
   document.getElementById('btnLimpar')?.addEventListener('click', ()=>{['f_empresa','f_ger','f_coord','f_vend','f_cat','f_sit'].forEach(id=>{const el=document.getElementById(id); if(el){ Array.from(el.options).forEach(o=>o.selected=false); syncMultiSelectUI(el); }}); ['f_cli','f_nome','f_ord','f_data_ini'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';}); try{localStorage.removeItem(PFV_FILTERS_KEY);sessionStorage.removeItem('pfv_link');}catch(e){} render();});

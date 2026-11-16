@@ -533,6 +533,7 @@ function processarWorkbookCarteira(wb, origem){
   dados = XLSX.utils.sheet_to_json(ws,{defval:'',raw:true,blankrows:false});
   const datas = dados.map(r=>parseAnyDate(getField2(r,'Data criação','DATA CRIACAO','DATACRIACAO'))).filter(Boolean);
   const maiorData = datas.length ? new Date(Math.max(...datas.map(d=>d.getTime()))) : null;
+  window.__MAIOR_DATA_BASE__ = maiorData;
   const status = document.getElementById('statusBase');
   if(status){
     status.style.background='#ecfdf5'; status.style.color='#065f46';
@@ -623,6 +624,16 @@ function render(){
   });
 
   // KPIs
+  const datasExibidas=filtered.map(x=>parseAnyDate(getField2(x,'Data criação','DATA CRIACAO','DATACRIACAO'))).filter(Boolean);
+  const maiorDataExibida=datasExibidas.length ? new Date(Math.max(...datasExibidas.map(d=>d.getTime()))) : null;
+  const statusBase=document.getElementById('statusBase');
+  if(statusBase && window.__MAIOR_DATA_BASE__){
+    const baseTxt=window.__MAIOR_DATA_BASE__.toLocaleDateString('pt-BR');
+    const exibTxt=maiorDataExibida ? maiorDataExibida.toLocaleDateString('pt-BR') : 'nenhuma';
+    const divergente=baseTxt!==exibTxt;
+    statusBase.textContent=`Base lida até ${baseTxt} · Tabela exibindo até ${exibTxt}`+(divergente?' · EXISTEM FILTROS OCULTANDO REGISTROS MAIS NOVOS':'');
+    statusBase.style.background=divergente?'#fff7ed':'#ecfdf5'; statusBase.style.color=divergente?'#9a3412':'#065f46';
+  }
   const ordCount = orderList.length;
   const itemCount = sum(orderList.map(g=>g.items.length));
   const volAtSum = sum(orderList.flatMap(g=>g.items.map(it=>getVolAtendido(it))));
@@ -806,6 +817,10 @@ function render(){
       const b=await arquivo.arrayBuffer();
       const wb=XLSX.read(b,{type:'array',cellDates:true});
       processarWorkbookCarteira(wb,arquivo.name+' (selecionada manualmente)');
+      document.querySelectorAll('.filters-grid input, .filters-grid select').forEach(el=>{
+        if(el.tagName==='SELECT') Array.from(el.options).forEach(o=>o.selected=false); else el.value='';
+      });
+      try{ localStorage.removeItem('PFV_FILTERS'); }catch(e){}
       fillSelByFields('f_empresa','Empresa','EMPRESA');
       fillSelByFields('f_ger','Gerente','GERENTE');
       fillSelByFields('f_coord','Coordenador','COORDENADOR','Coordenação','COORDENAÇÃO','Coordenacao','COORDENACAO');

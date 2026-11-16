@@ -530,7 +530,9 @@ async function load(){
   if(!r.ok) throw new Error('Não foi possível carregar Carteira.xlsx');
   const b=await r.arrayBuffer();
   const wb=XLSX.read(b,{type:'array'});
-  dados=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+  const nomeAba = wb.SheetNames.includes('BASE CARTEIRA') ? 'BASE CARTEIRA' : wb.SheetNames[0];
+  const ws = wb.Sheets[nomeAba];
+  dados=XLSX.utils.sheet_to_json(ws,{defval:'',raw:true,blankrows:false});
 
   window.__PFV_SYNC__ = window.__PFV_SYNC__ || pfvBindFilterSync({
     emp:   { id:'f_empresa', allowCreate:true },
@@ -602,7 +604,9 @@ function render(){
 
   const orderList = [];
   groups.forEach((items, ordv)=>{
-    orderList.push({ordv, items});
+    const datasCriacao = items.map(it=>parseAnyDate(getField2(it,'Data criação','DATA CRIACAO','DATACRIACAO'))).filter(Boolean);
+    const dataCriacaoMax = datasCriacao.length ? new Date(Math.max(...datasCriacao.map(d=>d.getTime()))) : null;
+    orderList.push({ordv, items, dataCriacaoMax});
   });
 
   // KPIs
@@ -633,7 +637,9 @@ function render(){
 
   document.getElementById('kpiVolLabel').textContent = 'Volume atendido';
   document.getElementById('sumTitle').textContent = 'Resumo';
-  document.getElementById('sumSub').textContent = `${ordCount.toLocaleString('pt-BR')} ordens · ${itemCount.toLocaleString('pt-BR')} itens · filtros aplicados`;
+  const datasVisiveis = filtered.map(it=>parseAnyDate(getField2(it,'Data criação','DATA CRIACAO','DATACRIACAO'))).filter(Boolean);
+  const dataMaisRecente = datasVisiveis.length ? new Date(Math.max(...datasVisiveis.map(d=>d.getTime()))) : null;
+  document.getElementById('sumSub').textContent = `${ordCount.toLocaleString('pt-BR')} ordens · ${itemCount.toLocaleString('pt-BR')} itens · dados até ${dataMaisRecente ? dataMaisRecente.toLocaleDateString('pt-BR') : '—'}`;
 
   // Mostrar/esconder painéis
   document.getElementById('summaryPanel').style.display = itemCount > 0 ? 'block' : 'none';
@@ -649,7 +655,12 @@ function render(){
     return;
   }
 
-  orderList.sort((a,b)=> String(b.ordv).localeCompare(String(a.ordv),'pt-BR'));
+  // Exibe primeiro as ordens com data de criação mais recente.
+  orderList.sort((a,b)=> {
+    const da = a.dataCriacaoMax ? a.dataCriacaoMax.getTime() : 0;
+    const db = b.dataCriacaoMax ? b.dataCriacaoMax.getTime() : 0;
+    return (db-da) || String(b.ordv).localeCompare(String(a.ordv),'pt-BR');
+  });
 
   const frag = document.createDocumentFragment();
 

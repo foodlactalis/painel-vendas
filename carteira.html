@@ -306,8 +306,6 @@ function pfvBindFilterSync(map){
       <button class="btn" id="btnExportFiltrado" type="button">Baixar base filtrada</button>
       <button class="btn" id="btnExportTotal" type="button">Baixar base total</button>
       <button class="btn" id="btnLimpar">Limpar</button>
-      <input id="arquivoCarteira" type="file" accept=".xlsx,.xls" style="display:none" />
-      <button class="btn" id="btnSelecionarBase" type="button">Selecionar base atualizada</button>
       <button class="btn primary" id="btnReload">Recarregar</button>
     </div>
   </section>
@@ -526,29 +524,13 @@ function situacaoMatch(situacaoFiltro, situacaoRow){
   return s.includes(f);
 }
 
-function processarWorkbookCarteira(wb, origem){
-  const nomeAba = wb.SheetNames.includes('BASE CARTEIRA') ? 'BASE CARTEIRA' : wb.SheetNames[0];
-  const ws = wb.Sheets[nomeAba];
-  if(!ws) throw new Error('Aba BASE CARTEIRA não encontrada.');
-  dados = XLSX.utils.sheet_to_json(ws,{defval:'',raw:true,blankrows:false});
-  const datas = dados.map(r=>parseAnyDate(getField2(r,'Data criação','DATA CRIACAO','DATACRIACAO'))).filter(Boolean);
-  const maiorData = datas.length ? new Date(Math.max(...datas.map(d=>d.getTime()))) : null;
-  window.__MAIOR_DATA_BASE__ = maiorData;
-  const status = document.getElementById('statusBase');
-  if(status){
-    status.style.background='#ecfdf5'; status.style.color='#065f46';
-    status.textContent = `Base carregada: ${origem} · ${dados.length.toLocaleString('pt-BR')} linhas · Data criação mais recente: ${maiorData ? maiorData.toLocaleDateString('pt-BR') : 'não identificada'}`;
-  }
-}
 async function load(){
   if(typeof XLSX === 'undefined') return;
-  const status=document.getElementById('statusBase');
-  if(status) status.textContent='Buscando Carteira.xlsx atualizada...';
-  const r=await fetch('./Carteira.xlsx?arquivo=' + Date.now(), { cache: 'no-store', headers:{'Cache-Control':'no-cache'} });
+  const r=await fetch('Carteira.xlsx?v=' + Date.now(), { cache: 'no-store' });
   if(!r.ok) throw new Error('Não foi possível carregar Carteira.xlsx');
   const b=await r.arrayBuffer();
-  const wb=XLSX.read(b,{type:'array',cellDates:true});
-  processarWorkbookCarteira(wb,'Carteira.xlsx da pasta do painel');
+  const wb=XLSX.read(b,{type:'array'});
+  dados=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
 
   window.__PFV_SYNC__ = window.__PFV_SYNC__ || pfvBindFilterSync({
     emp:   { id:'f_empresa', allowCreate:true },
@@ -624,16 +606,6 @@ function render(){
   });
 
   // KPIs
-  const datasExibidas=filtered.map(x=>parseAnyDate(getField2(x,'Data criação','DATA CRIACAO','DATACRIACAO'))).filter(Boolean);
-  const maiorDataExibida=datasExibidas.length ? new Date(Math.max(...datasExibidas.map(d=>d.getTime()))) : null;
-  const statusBase=document.getElementById('statusBase');
-  if(statusBase && window.__MAIOR_DATA_BASE__){
-    const baseTxt=window.__MAIOR_DATA_BASE__.toLocaleDateString('pt-BR');
-    const exibTxt=maiorDataExibida ? maiorDataExibida.toLocaleDateString('pt-BR') : 'nenhuma';
-    const divergente=baseTxt!==exibTxt;
-    statusBase.textContent=`Base lida até ${baseTxt} · Tabela exibindo até ${exibTxt}`+(divergente?' · EXISTEM FILTROS OCULTANDO REGISTROS MAIS NOVOS':'');
-    statusBase.style.background=divergente?'#fff7ed':'#ecfdf5'; statusBase.style.color=divergente?'#9a3412':'#065f46';
-  }
   const ordCount = orderList.length;
   const itemCount = sum(orderList.map(g=>g.items.length));
   const volAtSum = sum(orderList.flatMap(g=>g.items.map(it=>getVolAtendido(it))));
@@ -670,18 +642,24 @@ function render(){
   // Renderizar tabela
   const tb = document.querySelector('#tblOrdens tbody');
   tb.innerHTML = '';
-  document.getElementById('tabelaCount').textContent = itemCount.toLocaleString('pt-BR') + ' item' + (itemCount === 1 ? '' : 's');
+  const todasDatas=filtered.map(item=>parseAnyDate(getField2(item,'Data criação','DATA CRIACAO','DATACRIACAO'))).filter(Boolean);
+  const dataMaxTabela=todasDatas.length ? new Date(Math.max(...todasDatas.map(d=>d.getTime()))) : null;
+  document.getElementById('tabelaCount').textContent = itemCount.toLocaleString('pt-BR') + ' item' + (itemCount === 1 ? '' : 's') + (dataMaxTabela ? ' · até ' + dataMaxTabela.toLocaleDateString('pt-BR') : '');
 
   if(!orderList.length){
     tb.innerHTML = '<tr><td colspan="23" style="text-align:center;padding:16px;color:var(--muted);font-weight:900">Nenhuma ordem encontrada com os filtros aplicados.</td></tr>';
     return;
   }
 
-  orderList.sort((a,b)=> {
-    const ad=Math.max(...a.items.map(it=>parseAnyDate(getField2(it,'Data criação','DATA CRIACAO','DATACRIACAO'))?.getTime()||0));
-    const bd=Math.max(...b.items.map(it=>parseAnyDate(getField2(it,'Data criação','DATA CRIACAO','DATACRIACAO'))?.getTime()||0));
-    return (bd-ad) || String(b.ordv).localeCompare(String(a.ordv),'pt-BR');
+  // Ordena pela maior Data criação de cada ordem, da mais recente para a mais antiga.
+  orderList.forEach(grupo=>{
+    grupo.dataCriacaoMax = grupo.items.reduce((maior,item)=>{
+      const data=parseAnyDate(getField2(item,'Data criação','DATA CRIACAO','DATACRIACAO'));
+      const tempo=data ? data.getTime() : 0;
+      return Math.max(maior,tempo);
+    },0);
   });
+  orderList.sort((a,b)=> (b.dataCriacaoMax-a.dataCriacaoMax) || String(b.ordv).localeCompare(String(a.ordv),'pt-BR',{numeric:true}));
 
   const frag = document.createDocumentFragment();
 
@@ -808,33 +786,6 @@ function render(){
   ro.observe(tblWrap);
 })();
 
-(function(){
-  const inputArquivo=document.getElementById('arquivoCarteira');
-  document.getElementById('btnSelecionarBase')?.addEventListener('click',()=>inputArquivo?.click());
-  inputArquivo?.addEventListener('change',async()=>{
-    const arquivo=inputArquivo.files?.[0]; if(!arquivo) return;
-    try{
-      const b=await arquivo.arrayBuffer();
-      const wb=XLSX.read(b,{type:'array',cellDates:true});
-      processarWorkbookCarteira(wb,arquivo.name+' (selecionada manualmente)');
-      document.querySelectorAll('.filters-grid input, .filters-grid select').forEach(el=>{
-        if(el.tagName==='SELECT') Array.from(el.options).forEach(o=>o.selected=false); else el.value='';
-      });
-      try{ localStorage.removeItem('PFV_FILTERS'); }catch(e){}
-      fillSelByFields('f_empresa','Empresa','EMPRESA');
-      fillSelByFields('f_ger','Gerente','GERENTE');
-      fillSelByFields('f_coord','Coordenador','COORDENADOR','Coordenação','COORDENAÇÃO','Coordenacao','COORDENACAO');
-      fillSelByFields('f_vend','Vendedor','VENDEDOR');
-      fillSelByFields('f_cat','Chave Linha','CHAVE LINHA','ChaveLinha');
-      fillSelByFields('f_sit','Situação','SITUAÇÃO','SITUACAO','situacao');
-      initMultiSelects(); render();
-    }catch(err){
-      const status=document.getElementById('statusBase');
-      if(status){status.style.background='#fef2f2';status.style.color='#991b1b';status.textContent='Erro ao abrir a base selecionada: '+err.message;}
-      console.error(err);
-    }
-  });
-})();
 (function(){
   document.getElementById('btnToggleFiltros')?.addEventListener('click', ()=>{const box=document.getElementById('filtersBox'); const collapsed=box.classList.toggle('collapsed'); document.getElementById('btnToggleFiltros').textContent=collapsed?'Mostrar':'Ocultar';});
   document.getElementById('btnLimpar')?.addEventListener('click', ()=>{['f_empresa','f_ger','f_coord','f_vend','f_cat','f_sit'].forEach(id=>{const el=document.getElementById(id); if(el){ Array.from(el.options).forEach(o=>o.selected=false); syncMultiSelectUI(el); }}); ['f_cli','f_nome','f_ord','f_data_ini'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';}); try{localStorage.removeItem(PFV_FILTERS_KEY);sessionStorage.removeItem('pfv_link');}catch(e){} render();});

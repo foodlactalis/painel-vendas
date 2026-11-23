@@ -702,7 +702,22 @@ function render(){
 
   const frag = document.createDocumentFragment();
 
-  orderList.forEach(gp=>{
+  // Limita apenas a quantidade de linhas inseridas no DOM. KPIs e exportação
+  // continuam considerando 100% dos registros filtrados.
+  const MAX_LINHAS_TABELA = 1200;
+  const renderOrderList = [];
+  let linhasTabela = 0;
+  for(const grupo of orderList){
+    if(linhasTabela >= MAX_LINHAS_TABELA) break;
+    renderOrderList.push(grupo);
+    linhasTabela += grupo.items.length;
+  }
+  const countEl = document.getElementById('tabelaCount');
+  if(countEl && itemCount > linhasTabela){
+    countEl.textContent = itemCount.toLocaleString('pt-BR') + ' itens encontrados · exibindo ' + Math.min(linhasTabela,itemCount).toLocaleString('pt-BR') + ' para manter a página rápida';
+  }
+
+  renderOrderList.forEach(gp=>{
     const items = gp.items;
     const base = items[0];
     const cliente = String(getField2(base,'Cliente','CLIENTE')||'');
@@ -829,14 +844,33 @@ function render(){
   document.getElementById('btnToggleFiltros')?.addEventListener('click', ()=>{const box=document.getElementById('filtersBox'); const collapsed=box.classList.toggle('collapsed'); document.getElementById('btnToggleFiltros').textContent=collapsed?'Mostrar':'Ocultar';});
   document.getElementById('btnLimpar')?.addEventListener('click', ()=>{['f_empresa','f_ger','f_coord','f_vend','f_cat','f_sit'].forEach(id=>{const el=document.getElementById(id); if(el){ Array.from(el.options).forEach(o=>o.selected=false); syncMultiSelectUI(el); }}); ['f_cli','f_nome','f_ord','f_data_ini'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';}); try{localStorage.removeItem(PFV_FILTERS_KEY);sessionStorage.removeItem('pfv_link');}catch(e){} render();});
   document.getElementById('btnReload')?.addEventListener('click', load);
-  ['f_empresa','f_ger','f_coord','f_vend','f_cat','f_sit','f_cli','f_nome','f_ord','f_data_ini'].forEach(id=>{const el=document.getElementById(id); if(!el) return; el.addEventListener('input', ()=>setTimeout(render,120)); el.addEventListener('change', ()=>setTimeout(render,120));});
+  let renderTimer = 0;
+  const scheduleRender = (delay=180)=>{
+    clearTimeout(renderTimer);
+    renderTimer = setTimeout(()=>requestAnimationFrame(render), delay);
+  };
+  ['f_empresa','f_ger','f_coord','f_vend','f_cat','f_sit','f_cli','f_nome','f_ord','f_data_ini'].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    el.addEventListener('input', ()=>scheduleRender(220));
+    el.addEventListener('change', ()=>scheduleRender(0));
+  });
 })();
 
-function __waitXLSXThen(){
-  if(typeof XLSX !== 'undefined'){ load().catch(console.error); return; }
-  setTimeout(__waitXLSXThen, 50);
-}
-__waitXLSXThen();
+// Não bloqueia a tela caso o CDN do SheetJS esteja indisponível.
+(function startCarteira(){
+  const inicio = Date.now();
+  let iniciado = false;
+  function tentar(){
+    if(iniciado) return;
+    if(typeof XLSX !== 'undefined' || Date.now() - inicio >= 2500){
+      iniciado = true;
+      load().catch(console.error);
+      return;
+    }
+    setTimeout(tentar, 80);
+  }
+  tentar();
+})();
 </script>
 
 <script>
